@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPosition } from '@/types';
 import PotholeMarker from './PotholeMarker';
@@ -30,11 +29,9 @@ const Map: React.FC = () => {
   });
 
   useEffect(() => {
-    // In a real implementation, this would use a map library like Leaflet or Google Maps
     if (mapRef.current) {
       setTimeout(() => {
         setMapLoaded(true);
-        // Simulate road damage statistics
         setRoadDamageStats({
           total: potholes.length,
           critical: potholes.filter(p => p.severity === 'high').length,
@@ -68,7 +65,6 @@ const Map: React.FC = () => {
     }
   };
 
-  // Simulate zooming in/out
   const handleZoom = (direction: 'in' | 'out') => {
     setPosition(prev => ({
       ...prev,
@@ -90,7 +86,6 @@ const Map: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Map visualization settings */}
       <Tabs defaultValue="visualization" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
           <TabsTrigger value="visualization">Map Visualization</TabsTrigger>
@@ -99,7 +94,6 @@ const Map: React.FC = () => {
         </TabsList>
       </Tabs>
 
-      {/* Main map container */}
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-border">
         <div 
           ref={mapRef} 
@@ -122,7 +116,6 @@ const Map: React.FC = () => {
             </div>
           )}
           
-          {/* Overlay elements for road quality when enabled */}
           {mapLoaded && roadQualityView && (
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-red-500/20 to-transparent"></div>
@@ -131,12 +124,10 @@ const Map: React.FC = () => {
             </div>
           )}
           
-          {/* Map markers */}
           {mapLoaded && potholes.map((pothole) => (
             <PotholeMarker key={pothole.id} pothole={pothole} />
           ))}
 
-          {/* User location marker */}
           {mapLoaded && userLocation && (
             <div 
               className="absolute z-10 animate-pulse"
@@ -154,7 +145,6 @@ const Map: React.FC = () => {
             </div>
           )}
 
-          {/* Simulated traffic overlay */}
           {mapLoaded && (
             <div 
               className="absolute inset-0 bg-gradient-to-b from-red-500/0 to-red-500/20 pointer-events-none"
@@ -163,7 +153,6 @@ const Map: React.FC = () => {
           )}
         </div>
         
-        {/* Map controls */}
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           <Button
             size="icon"
@@ -211,7 +200,6 @@ const Map: React.FC = () => {
           </Button>
         </div>
 
-        {/* Search bar overlay */}
         <div className="absolute top-4 left-4 w-64">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -223,7 +211,6 @@ const Map: React.FC = () => {
           </div>
         </div>
 
-        {/* Traffic density control */}
         <div className="absolute bottom-20 left-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-md shadow-md">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Traffic Density</span>
@@ -239,23 +226,19 @@ const Map: React.FC = () => {
           />
         </div>
         
-        {/* Speedometer overlay */}
         <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md flex items-center gap-2">
           <Gauge className="h-5 w-5 text-primary" />
           <div className="text-sm font-bold">60 km/h</div>
         </div>
 
-        {/* Compass */}
         <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md">
           <Navigation className="h-6 w-6 text-primary" />
         </div>
         
-        {/* Map attribution */}
         <div className="absolute bottom-16 right-2 text-xs text-gray-600 bg-white/80 px-2 py-1 rounded">
           Map data © {new Date().getFullYear()} Contributors | India Road Network
         </div>
 
-        {/* Stats overlay */}
         {mapLoaded && (
           <div className="absolute top-16 right-4 bg-white/80 backdrop-blur-sm p-3 rounded-md shadow-md w-48">
             <h4 className="font-medium text-sm mb-2">Road Damage Report</h4>
@@ -266,11 +249,11 @@ const Map: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs">Moderate</span>
-                <Badge variant="warning" className="text-xs bg-yellow-500 hover:bg-yellow-600">{roadDamageStats.moderate}</Badge>
+                <Badge variant="secondary" className="text-xs bg-yellow-500 hover:bg-yellow-600">{roadDamageStats.moderate}</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs">Minor</span>
-                <Badge className="text-xs bg-green-500 hover:bg-green-600">{roadDamageStats.minor}</Badge>
+                <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">{roadDamageStats.minor}</Badge>
               </div>
             </div>
           </div>
