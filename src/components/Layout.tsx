@@ -32,7 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <Header activeTab={activeTab} onTabChange={onTabChange} />
       <div className="container mx-auto mt-6 px-4 sm:px-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
