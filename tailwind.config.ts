@@ -28,15 +28,22 @@ export default {
 				primary: {
 					DEFAULT: '#3B82F6',
 					dark: '#1E40AF',
-					foreground: '#FFFFFF'
+					foreground: '#FFFFFF',
+					light: '#93C5FD',
+					ultralight: '#EFF6FF'
 				},
 				secondary: {
 					DEFAULT: '#FBBF24',
-					foreground: '#000000'
+					dark: '#B45309',
+					foreground: '#000000',
+					light: '#FDE68A',
+					ultralight: '#FEF3C7'
 				},
 				destructive: {
 					DEFAULT: '#EF4444',
-					foreground: '#FFFFFF'
+					foreground: '#FFFFFF',
+					light: '#FCA5A5',
+					ultralight: '#FEE2E2'
 				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
@@ -67,7 +74,24 @@ export default {
 				severity: {
 					low: '#22C55E',
 					medium: '#FBBF24',
-					high: '#EF4444'
+					high: '#EF4444',
+					'low-light': '#DCFCE7',
+					'medium-light': '#FEF9C3',
+					'high-light': '#FEE2E2'
+				},
+				india: {
+					orange: '#FF9933',
+					white: '#FFFFFF',
+					green: '#138808',
+					blue: '#0000CE',
+					chakra: '#000080'
+				},
+				terrain: {
+					water: '#A5D8FF',
+					forest: '#84CC16',
+					urban: '#D1D5DB',
+					highway: '#F97316',
+					mountain: '#A8A29E'
 				}
 			},
 			borderRadius: {
@@ -95,12 +119,32 @@ export default {
 				'pulse': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.5' }
+				},
+				'fade-in': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fade-out': {
+					'0%': { opacity: '1', transform: 'translateY(0)' },
+					'100%': { opacity: '0', transform: 'translateY(10px)' }
+				},
+				'spin-slow': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
+				},
+				'bounce-soft': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'fade-in': 'fade-in 0.5s ease-out forwards',
+				'fade-out': 'fade-out 0.5s ease-out forwards',
+				'spin-slow': 'spin-slow 8s linear infinite',
+				'bounce-soft': 'bounce-soft 2s ease-in-out infinite'
 			}
 		}
 	},
