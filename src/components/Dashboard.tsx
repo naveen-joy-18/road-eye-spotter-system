@@ -139,11 +139,12 @@ const Dashboard: React.FC = () => {
                 <span>Low</span>
                 <span className="font-medium">{severityCounts.low}</span>
               </div>
-              <Progress 
-                value={(severityCounts.low / totalPotholes) * 100} 
-                className="h-2 bg-gray-200" 
-                indicatorClassName="bg-severity-low"
-              />
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div 
+                  className="absolute h-full bg-severity-low" 
+                  style={{ width: `${(severityCounts.low / totalPotholes) * 100}%` }}
+                ></div>
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -151,11 +152,12 @@ const Dashboard: React.FC = () => {
                 <span>Medium</span>
                 <span className="font-medium">{severityCounts.medium}</span>
               </div>
-              <Progress 
-                value={(severityCounts.medium / totalPotholes) * 100} 
-                className="h-2 bg-gray-200" 
-                indicatorClassName="bg-severity-medium"
-              />
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div 
+                  className="absolute h-full bg-severity-medium" 
+                  style={{ width: `${(severityCounts.medium / totalPotholes) * 100}%` }}
+                ></div>
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -163,11 +165,12 @@ const Dashboard: React.FC = () => {
                 <span>High</span>
                 <span className="font-medium">{severityCounts.high}</span>
               </div>
-              <Progress 
-                value={(severityCounts.high / totalPotholes) * 100} 
-                className="h-2 bg-gray-200" 
-                indicatorClassName="bg-severity-high"
-              />
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div 
+                  className="absolute h-full bg-severity-high" 
+                  style={{ width: `${(severityCounts.high / totalPotholes) * 100}%` }}
+                ></div>
+              </div>
             </div>
           </div>
         </TabsContent>
