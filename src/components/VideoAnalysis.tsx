@@ -30,7 +30,8 @@ import {
   RotateCw,
   ZoomIn, 
   ZoomOut,
-  Info
+  Info,
+  Bell,
 } from 'lucide-react';
 
 type PotholeDetection = {
@@ -41,7 +42,11 @@ type PotholeDetection = {
   location?: { lat: number; lng: number };
 };
 
-const VideoAnalysis: React.FC = () => {
+interface VideoAnalysisProps {
+  onSimulationChange?: (isSimulating: boolean) => void;
+}
+
+const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange }) => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -92,6 +97,12 @@ const VideoAnalysis: React.FC = () => {
       videoRef.current.playbackRate = videoSpeed;
     }
   }, [videoSpeed]);
+
+  useEffect(() => {
+    if (onSimulationChange) {
+      onSimulationChange(isSimulating);
+    }
+  }, [isSimulating, onSimulationChange]);
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -6,6 +6,10 @@ import ReportForm from '@/components/ReportForm';
 import PotholeList from '@/components/PotholeList';
 import Dashboard from '@/components/Dashboard';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import DriverAlerts from '@/components/alerts/DriverAlerts';
+import NavigationAlerts from '@/components/alerts/NavigationAlerts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bell } from 'lucide-react';
 
 const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState('map');
@@ -18,15 +22,31 @@ const Index: React.FC = () => {
             <div className="lg:col-span-2">
               <Map />
             </div>
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-6">
               <PotholeList />
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <Bell className="h-5 w-5 mr-2" />
+                    Driver Alerts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DriverAlerts />
+                </CardContent>
+              </Card>
             </div>
           </div>
         </TabsContent>
         
         <TabsContent value="report" className="m-0">
-          <div className="max-w-lg mx-auto">
-            <ReportForm />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <ReportForm />
+            </div>
+            <div className="lg:col-span-1">
+              <NavigationAlerts />
+            </div>
           </div>
         </TabsContent>
         
