@@ -2,10 +2,14 @@
 import React, { useState } from 'react';
 import VideoAnalysis from '@/components/VideoAnalysis';
 import DriverAlerts from '@/components/alerts/DriverAlerts';
+import DataManagement from '@/components/alerts/DataManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertCircle, Database, Bell } from 'lucide-react';
 
 const VideoAnalysisWithAlerts: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
+  const [activeTab, setActiveTab] = useState('alerts');
 
   const handleSimulationChange = (simulating: boolean) => {
     setIsSimulating(simulating);
@@ -18,16 +22,29 @@ const VideoAnalysisWithAlerts: React.FC = () => {
       </div>
       <div className="lg:col-span-1">
         <Card className="h-full">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              Driver Alerts
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-2">
+                  <TabsTrigger value="alerts" className="flex items-center">
+                    <Bell className="h-4 w-4 mr-2" />
+                    Driver Alerts
+                  </TabsTrigger>
+                  <TabsTrigger value="data" className="flex items-center">
+                    <Database className="h-4 w-4 mr-2" />
+                    Data Management
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <DriverAlerts simulationActive={isSimulating} />
+            <TabsContent value="alerts" className="mt-0">
+              <DriverAlerts simulationActive={isSimulating} />
+            </TabsContent>
+            <TabsContent value="data" className="mt-0">
+              <DataManagement simulationActive={isSimulating} />
+            </TabsContent>
           </CardContent>
         </Card>
       </div>
