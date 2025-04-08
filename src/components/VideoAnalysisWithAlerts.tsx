@@ -5,7 +5,7 @@ import DriverAlerts from '@/components/alerts/DriverAlerts';
 import DataManagement from '@/components/alerts/DataManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Database, Bell } from 'lucide-react';
+import { Database, Bell } from 'lucide-react';
 
 const VideoAnalysisWithAlerts: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);

@@ -1,11 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import VideoAnalysisWithAlerts from '@/components/VideoAnalysisWithAlerts';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from 'sonner';
 
 const VideoAnalysisPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('video');
+
+  // Ensure the layout knows this is the video tab
+  useEffect(() => {
+    setActiveTab('video');
+  }, []);
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
