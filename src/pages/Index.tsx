@@ -18,7 +18,7 @@ const Index: React.FC = () => {
             <div className="lg:col-span-2">
               <Map />
             </div>
-            <div>
+            <div className="lg:col-span-1">
               <PotholeList />
             </div>
           </div>

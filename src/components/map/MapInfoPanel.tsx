@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
+import { AlertCircle, BarChart3, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { toast } from 'sonner';
 
 interface MapInfoPanelProps {
   roadDamageStats: {
@@ -20,6 +22,9 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
   const moderatePercent = Math.round((roadDamageStats.moderate / totalCount) * 100);
   const minorPercent = Math.round((roadDamageStats.minor / totalCount) * 100);
   
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  
   // Determine the trend icon based on which category has the highest count
   const getTrendIcon = () => {
     if (roadDamageStats.critical >= roadDamageStats.moderate && 
@@ -33,13 +38,23 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
     }
   };
 
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // Simulate data refresh
+    setTimeout(() => {
+      setIsRefreshing(false);
+      setLastUpdated(new Date());
+      toast.success("Road damage data refreshed");
+    }, 1200);
+  };
+
   return (
     <div className="absolute top-16 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-md shadow-md w-60 border border-gray-200 animate-fade-in">
       <div className="flex justify-between items-center">
         <h4 className="font-semibold text-sm mb-2">Road Damage Report</h4>
         <div className="flex items-center gap-1 text-xs bg-gray-100 rounded-full px-2 py-0.5">
           {getTrendIcon()}
-          <span>{new Date().toLocaleDateString('en-IN')}</span>
+          <span>{lastUpdated.toLocaleDateString('en-IN')}</span>
         </div>
       </div>
       
@@ -81,10 +96,16 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
       <div className="mt-3 pt-2 border-t border-gray-200">
         <div className="flex justify-between items-center text-xs text-gray-600">
           <span>Total Reports: <span className="font-medium">{roadDamageStats.total}</span></span>
-          <div className="flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            <span>Live Data</span>
-          </div>
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="p-1 h-auto" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Refresh</span>
+          </Button>
         </div>
       </div>
     </div>
