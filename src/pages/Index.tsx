@@ -13,6 +13,8 @@ import { Bell } from 'lucide-react';
 
 const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState('map');
+  // Add a state to track simulation status for DriverAlerts
+  const [simulationActive, setSimulationActive] = useState(false);
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
@@ -32,7 +34,8 @@ const Index: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <DriverAlerts />
+                  {/* Pass the required simulationActive prop */}
+                  <DriverAlerts simulationActive={simulationActive} />
                 </CardContent>
               </Card>
             </div>
