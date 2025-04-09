@@ -23,15 +23,11 @@ import { MapControls } from './map/MapControls';
 import { TrafficOverlay } from './map/TrafficOverlay';
 import { MapLegend } from './map/MapLegend';
 import { MapInfoPanel } from './map/MapInfoPanel';
+import { useGoogleMaps, isGoogleMapsLoaded } from '@/hooks/useGoogleMaps';
 
 interface MapProps {
   googleMapsApiKey?: string;
 }
-
-// Utility function to check if Google Maps API is loaded
-const isGoogleMapsLoaded = (): boolean => {
-  return typeof window !== 'undefined' && Boolean(window.google && window.google.maps);
-};
 
 const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -66,11 +62,13 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [compassHeading, setCompassHeading] = useState<number>(0);
   
   const markerRefs = useRef<google.maps.Marker[]>([]);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
   const trafficLayerRef = useRef<google.maps.TrafficLayer | null>(null);
   const mapEventListeners = useRef<google.maps.MapsEventListener[]>([]);
   const loadingIntervalRef = useRef<number | null>(null);
   const compassIntervalRef = useRef<number | null>(null);
+  
+  // Use our custom hook to load Google Maps API
+  const { isLoaded: mapsApiLoaded, loadError } = useGoogleMaps(googleMapsApiKey || '');
   
   const indianCities = [
     { name: "All India", lat: 20.5937, lng: 78.9629, zoom: 5 },
@@ -85,25 +83,86 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     { name: "Jaipur", lat: 26.9124, lng: 75.7873, zoom: 12 }
   ];
 
+  // Initialize the map once the Google Maps API is loaded
   useEffect(() => {
-    if (!googleMapsApiKey) {
-      console.error("Google Maps API key is missing");
-      return;
-    }
+    if (!mapsApiLoaded || !mapRef.current) return;
+    
+    // Start the loading animation
+    const interval = setInterval(() => {
+      setMapProgress(prev => {
+        const newProgress = prev + 10;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setMapLoaded(true);
+            setRoadDamageStats({
+              total: potholes.length,
+              critical: potholes.filter(p => p.severity === 'high').length,
+              moderate: potholes.filter(p => p.severity === 'medium').length,
+              minor: potholes.filter(p => p.severity === 'low').length
+            });
+            
+            try {
+              if (window.google && window.google.maps && mapRef.current) {
+                googleMapRef.current = new google.maps.Map(mapRef.current, {
+                  center: { lat: position.latitude, lng: position.longitude },
+                  zoom: position.zoom,
+                  mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
+                  fullscreenControl: false,
+                  mapTypeControl: false,
+                  streetViewControl: false,
+                });
+                
+                addPotholeMarkers();
+                
+                if (visibleLayers.traffic && googleMapRef.current) {
+                  trafficLayerRef.current = new google.maps.TrafficLayer();
+                  trafficLayerRef.current.setMap(googleMapRef.current);
+                }
+                
+                // Add event listeners for map interactions
+                if (googleMapRef.current && window.google && window.google.maps) {
+                  const listener = google.maps.event.addListener(googleMapRef.current, 'mousedown', () => {
+                    // Handle user interaction - placeholder for any future code
+                  });
+                  mapEventListeners.current.push(listener);
+                }
+              }
+            } catch (error) {
+              console.error("Error initializing Google Maps:", error);
+              toast.error("Failed to load map");
+            }
+          }, 500);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 150);
+    loadingIntervalRef.current = interval as unknown as number;
 
-    // Cleanup function to handle component unmount properly
-    const cleanup = () => {
-      // Clear all intervals
+    // Simulated compass rotation
+    const compassInterval = setInterval(() => {
+      setCompassHeading(prev => (prev + 1) % 360);
+    }, 100);
+    compassIntervalRef.current = compassInterval as unknown as number;
+    
+    // Return cleanup function
+    return () => {
       if (loadingIntervalRef.current) {
-        window.clearInterval(loadingIntervalRef.current);
+        clearInterval(loadingIntervalRef.current);
         loadingIntervalRef.current = null;
       }
       
       if (compassIntervalRef.current) {
-        window.clearInterval(compassIntervalRef.current);
+        clearInterval(compassIntervalRef.current);
         compassIntervalRef.current = null;
       }
-      
+    };
+  }, [mapsApiLoaded, position.latitude, position.longitude, position.zoom, mapStyle, visibleLayers.traffic]);
+
+  // Clean up map resources on component unmount
+  useEffect(() => {
+    return () => {
       // Remove event listeners
       if (mapEventListeners.current.length > 0) {
         mapEventListeners.current.forEach(listener => {
@@ -133,95 +192,29 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
       // Clear map reference
       googleMapRef.current = null;
       
-      // Remove the script if it was added by this component
-      if (scriptRef.current && document.head.contains(scriptRef.current)) {
-        document.head.removeChild(scriptRef.current);
-        scriptRef.current = null;
+      // Clear intervals if they somehow weren't cleared
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current);
+        loadingIntervalRef.current = null;
+      }
+      
+      if (compassIntervalRef.current) {
+        clearInterval(compassIntervalRef.current);
+        compassIntervalRef.current = null;
       }
     };
+  }, []);
 
-    // Check if Google Maps API is already loaded
-    if (isGoogleMapsLoaded()) {
-      initializeMap();
-      return cleanup;
+  // Show error if Google Maps fails to load
+  useEffect(() => {
+    if (loadError) {
+      toast.error(`Failed to load Google Maps: ${loadError.message}`);
+      console.error("Google Maps API loading error:", loadError);
     }
-
-    // Load the Google Maps API script
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.onload = initializeMap;
-    document.head.appendChild(script);
-    scriptRef.current = script;
-
-    return cleanup;
-  }, [googleMapsApiKey]);
-
-  const initializeMap = () => {
-    if (!mapRef.current || !isGoogleMapsLoaded()) return;
-
-    const interval = setInterval(() => {
-      setMapProgress(prev => {
-        const newProgress = prev + 10;
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setMapLoaded(true);
-            setRoadDamageStats({
-              total: potholes.length,
-              critical: potholes.filter(p => p.severity === 'high').length,
-              moderate: potholes.filter(p => p.severity === 'medium').length,
-              minor: potholes.filter(p => p.severity === 'low').length
-            });
-            
-            try {
-              if (isGoogleMapsLoaded() && mapRef.current) {
-                googleMapRef.current = new google.maps.Map(mapRef.current, {
-                  center: { lat: position.latitude, lng: position.longitude },
-                  zoom: position.zoom,
-                  mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
-                  fullscreenControl: false,
-                  mapTypeControl: false,
-                  streetViewControl: false,
-                });
-                
-                addPotholeMarkers();
-                
-                if (visibleLayers.traffic) {
-                  trafficLayerRef.current = new google.maps.TrafficLayer();
-                  trafficLayerRef.current.setMap(googleMapRef.current);
-                }
-                
-                // Add event listeners for map interactions
-                if (googleMapRef.current) {
-                  mapEventListeners.current.push(
-                    google.maps.event.addListener(googleMapRef.current, 'mousedown', () => {
-                      // Handle user interaction - placeholder for any future code
-                    })
-                  );
-                }
-              }
-            } catch (error) {
-              console.error("Error initializing Google Maps:", error);
-              toast.error("Failed to load map");
-            }
-          }, 500);
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 150);
-    loadingIntervalRef.current = interval as unknown as number;
-
-    const compassInterval = setInterval(() => {
-      setCompassHeading(prev => (prev + 1) % 360);
-    }, 100);
-    compassIntervalRef.current = compassInterval as unknown as number;
-  };
+  }, [loadError]);
 
   const addPotholeMarkers = () => {
-    if (!googleMapRef.current || !isGoogleMapsLoaded()) return;
+    if (!googleMapRef.current || !window.google || !window.google.maps) return;
     
     // Clear previous markers
     if (markerRefs.current.length > 0) {
@@ -233,7 +226,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     
     try {
       const newMarkers = potholes.map(pothole => {
-        if (!googleMapRef.current || !isGoogleMapsLoaded()) return null;
+        if (!googleMapRef.current || !window.google || !window.google.maps) return null;
         
         const center = googleMapRef.current.getCenter();
         const lat = center ? center.lat() + (Math.random() - 0.5) * 0.05 : position.latitude;
@@ -269,11 +262,12 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
           content: infoContent
         });
         
-        mapEventListeners.current.push(
-          google.maps.event.addListener(marker, 'click', () => {
+        if (window.google && window.google.maps) {
+          const listener = google.maps.event.addListener(marker, 'click', () => {
             infoWindow.open(googleMapRef.current!, marker);
-          })
-        );
+          });
+          mapEventListeners.current.push(listener);
+        }
         
         return marker;
       }).filter(Boolean) as google.maps.Marker[];
@@ -302,7 +296,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             googleMapRef.current.setCenter({ lat: latitude, lng: longitude });
             googleMapRef.current.setZoom(15);
             
-            if (isGoogleMapsLoaded()) {
+            if (window.google && window.google.maps) {
               new google.maps.Marker({
                 position: { lat: latitude, lng: longitude },
                 map: googleMapRef.current,
@@ -350,7 +344,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     const newStyle = mapStyle === 'streets' ? 'satellite' : 'streets';
     setMapStyle(newStyle);
     
-    if (googleMapRef.current && isGoogleMapsLoaded()) {
+    if (googleMapRef.current && window.google && window.google.maps) {
       googleMapRef.current.setMapTypeId(
         newStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP
       );
@@ -443,6 +437,16 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     toast.success("Map data downloaded successfully!");
   };
 
+  // Show error when API key is missing
+  if (!googleMapsApiKey) {
+    return (
+      <div className="p-4 border border-red-500 rounded-md bg-red-50 text-red-700">
+        <h2 className="text-lg font-bold mb-2">Error: Google Maps API Key Missing</h2>
+        <p>Please provide a valid Google Maps API key to load the map.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Tabs value={mapTabView} onValueChange={setMapTabView} className="w-full">
@@ -467,7 +471,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               ref={mapRef} 
               className="absolute inset-0 bg-gray-200 transition-all duration-500"
             >
-              {!mapLoaded && (
+              {(!mapLoaded || !mapsApiLoaded) && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
                   <div className="flex flex-col items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -481,6 +485,11 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                     <p className="text-white/70 text-sm mt-2">
                       Loading region: {mapRegion} ({mapProgress}%)
                     </p>
+                    {loadError && (
+                      <p className="text-red-400 text-sm mt-2">
+                        Error: {loadError.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

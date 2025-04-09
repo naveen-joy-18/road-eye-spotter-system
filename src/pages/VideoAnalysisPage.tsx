@@ -24,7 +24,7 @@ const VideoAnalysisPage: React.FC = () => {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="video">
+          <TabsContent value="video" className="m-0 animate-in fade-in-50">
             <VideoAnalysisWithAlerts />
           </TabsContent>
           <TabsContent value="map">
