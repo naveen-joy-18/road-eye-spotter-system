@@ -23,7 +23,7 @@ import { MapControls } from './map/MapControls';
 import { TrafficOverlay } from './map/TrafficOverlay';
 import { MapLegend } from './map/MapLegend';
 import { MapInfoPanel } from './map/MapInfoPanel';
-import { useGoogleMaps, isGoogleMapsLoaded } from '@/hooks/useGoogleMaps';
+import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 
 interface MapProps {
   googleMapsApiKey?: string;
@@ -31,7 +31,6 @@ interface MapProps {
 
 const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const googleMapRef = useRef<google.maps.Map | null>(null);
   const [position, setPosition] = useState<MapPosition>({
     latitude: 20.5937, // Central India coordinates
     longitude: 78.9629,
@@ -61,13 +60,12 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [showSpeedometer, setShowSpeedometer] = useState<boolean>(true);
   const [compassHeading, setCompassHeading] = useState<number>(0);
   
-  const markerRefs = useRef<google.maps.Marker[]>([]);
-  const trafficLayerRef = useRef<google.maps.TrafficLayer | null>(null);
-  const mapEventListeners = useRef<google.maps.MapsEventListener[]>([]);
+  // Simulated map markers
+  const [mapMarkers, setMapMarkers] = useState<any[]>([]);
   const loadingIntervalRef = useRef<number | null>(null);
   const compassIntervalRef = useRef<number | null>(null);
   
-  // Use our custom hook to load Google Maps API
+  // Use our custom hook to simulate map API loading
   const { isLoaded: mapsApiLoaded, loadError } = useGoogleMaps(googleMapsApiKey || '');
   
   const indianCities = [
@@ -83,7 +81,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     { name: "Jaipur", lat: 26.9124, lng: 75.7873, zoom: 12 }
   ];
 
-  // Initialize the map once the Google Maps API is loaded
+  // Initialize the map once the API is "loaded"
   useEffect(() => {
     if (!mapsApiLoaded || !mapRef.current) return;
     
@@ -102,36 +100,8 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               minor: potholes.filter(p => p.severity === 'low').length
             });
             
-            try {
-              if (window.google && window.google.maps && mapRef.current) {
-                googleMapRef.current = new google.maps.Map(mapRef.current, {
-                  center: { lat: position.latitude, lng: position.longitude },
-                  zoom: position.zoom,
-                  mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
-                  fullscreenControl: false,
-                  mapTypeControl: false,
-                  streetViewControl: false,
-                });
-                
-                addPotholeMarkers();
-                
-                if (visibleLayers.traffic && googleMapRef.current) {
-                  trafficLayerRef.current = new google.maps.TrafficLayer();
-                  trafficLayerRef.current.setMap(googleMapRef.current);
-                }
-                
-                // Add event listeners for map interactions
-                if (googleMapRef.current && window.google && window.google.maps) {
-                  const listener = google.maps.event.addListener(googleMapRef.current, 'mousedown', () => {
-                    // Handle user interaction - placeholder for any future code
-                  });
-                  mapEventListeners.current.push(listener);
-                }
-              }
-            } catch (error) {
-              console.error("Error initializing Google Maps:", error);
-              toast.error("Failed to load map");
-            }
+            // Simulate adding markers
+            addPotholeMarkers();
           }, 500);
           return 100;
         }
@@ -158,41 +128,12 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
         compassIntervalRef.current = null;
       }
     };
-  }, [mapsApiLoaded, position.latitude, position.longitude, position.zoom, mapStyle, visibleLayers.traffic]);
+  }, [mapsApiLoaded]);
 
-  // Clean up map resources on component unmount
+  // Clean up resources on component unmount
   useEffect(() => {
     return () => {
-      // Remove event listeners
-      if (mapEventListeners.current.length > 0) {
-        mapEventListeners.current.forEach(listener => {
-          if (listener) {
-            listener.remove();
-          }
-        });
-        mapEventListeners.current = [];
-      }
-      
-      // Clear markers
-      if (markerRefs.current.length > 0) {
-        markerRefs.current.forEach(marker => {
-          if (marker) {
-            marker.setMap(null);
-          }
-        });
-        markerRefs.current = [];
-      }
-      
-      // Remove traffic layer
-      if (trafficLayerRef.current) {
-        trafficLayerRef.current.setMap(null);
-        trafficLayerRef.current = null;
-      }
-      
-      // Clear map reference
-      googleMapRef.current = null;
-      
-      // Clear intervals if they somehow weren't cleared
+      // Clear all intervals
       if (loadingIntervalRef.current) {
         clearInterval(loadingIntervalRef.current);
         loadingIntervalRef.current = null;
@@ -202,77 +143,46 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
         clearInterval(compassIntervalRef.current);
         compassIntervalRef.current = null;
       }
+      
+      // Clear any other resources
+      setMapMarkers([]);
     };
   }, []);
 
-  // Show error if Google Maps fails to load
+  // Show error if API fails to load
   useEffect(() => {
     if (loadError) {
-      toast.error(`Failed to load Google Maps: ${loadError.message}`);
-      console.error("Google Maps API loading error:", loadError);
+      toast.error(`Failed to load Map API: ${loadError.message}`);
+      console.error("Map API loading error:", loadError);
     }
   }, [loadError]);
 
   const addPotholeMarkers = () => {
-    if (!googleMapRef.current || !window.google || !window.google.maps) return;
-    
-    // Clear previous markers
-    if (markerRefs.current.length > 0) {
-      markerRefs.current.forEach(marker => {
-        if (marker) marker.setMap(null);
-      });
-      markerRefs.current = [];
-    }
-    
+    // Create simulated markers for potholes
     try {
       const newMarkers = potholes.map(pothole => {
-        if (!googleMapRef.current || !window.google || !window.google.maps) return null;
-        
-        const center = googleMapRef.current.getCenter();
-        const lat = center ? center.lat() + (Math.random() - 0.5) * 0.05 : position.latitude;
-        const lng = center ? center.lng() + (Math.random() - 0.5) * 0.05 : position.longitude;
+        const lat = position.latitude + (Math.random() - 0.5) * 0.05;
+        const lng = position.longitude + (Math.random() - 0.5) * 0.05;
         
         const markerColor = pothole.severity === 'high' ? 'red' : 
-                           pothole.severity === 'medium' ? 'orange' : 'green';
+                          pothole.severity === 'medium' ? 'orange' : 'green';
         
-        const marker = new google.maps.Marker({
+        return {
+          id: pothole.id,
           position: { lat, lng },
-          map: googleMapRef.current,
           title: `Pothole: ${pothole.address}`,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: markerColor,
-            fillOpacity: 0.8,
-            strokeWeight: 2,
-            strokeColor: 'white',
-            scale: 10
-          }
-        });
-        
-        const infoContent = `
-          <div style="padding: 10px; max-width: 200px;">
-            <h3 style="margin: 0 0 5px 0;">${pothole.severity.charAt(0).toUpperCase() + pothole.severity.slice(1)} Severity Pothole</h3>
-            <p style="margin: 0 0 5px 0;">${pothole.address}</p>
-            <p style="margin: 0; font-size: 12px;">Reported: ${new Date(pothole.reportedAt).toLocaleDateString()}</p>
-            <p style="margin: 5px 0 0 0; font-size: 12px;">Status: ${pothole.status}</p>
-          </div>
-        `;
-        
-        const infoWindow = new google.maps.InfoWindow({
-          content: infoContent
-        });
-        
-        if (window.google && window.google.maps) {
-          const listener = google.maps.event.addListener(marker, 'click', () => {
-            infoWindow.open(googleMapRef.current!, marker);
-          });
-          mapEventListeners.current.push(listener);
-        }
-        
-        return marker;
-      }).filter(Boolean) as google.maps.Marker[];
+          color: markerColor,
+          info: {
+            severity: pothole.severity,
+            address: pothole.address,
+            reportedAt: pothole.reportedAt,
+            status: pothole.status
+          },
+          visible: true
+        };
+      });
       
-      markerRefs.current = newMarkers;
+      setMapMarkers(newMarkers);
     } catch (error) {
       console.error("Error creating markers:", error);
       toast.error("Failed to create map markers");
@@ -292,26 +202,23 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             zoom: 15
           });
           
-          if (googleMapRef.current) {
-            googleMapRef.current.setCenter({ lat: latitude, lng: longitude });
-            googleMapRef.current.setZoom(15);
-            
-            if (window.google && window.google.maps) {
-              new google.maps.Marker({
-                position: { lat: latitude, lng: longitude },
-                map: googleMapRef.current,
-                title: 'Your Location',
-                icon: {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  fillColor: '#4285F4',
-                  fillOpacity: 0.9,
-                  strokeWeight: 2,
-                  strokeColor: 'white',
-                  scale: 12
-                }
-              });
-            }
-          }
+          // Add a marker for the user's location
+          const userMarker = {
+            id: 'user-location',
+            position: { lat: latitude, lng: longitude },
+            title: 'Your Location',
+            color: '#4285F4',
+            info: {
+              severity: 'none',
+              address: 'Your current location',
+              reportedAt: new Date().toISOString(),
+              status: 'active'
+            },
+            visible: true,
+            isUser: true
+          };
+          
+          setMapMarkers(prev => [userMarker, ...prev]);
           
           toast.success('Location found! Centered map at your position.');
         },
@@ -326,30 +233,20 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   };
 
   const handleZoom = (direction: 'in' | 'out') => {
-    if (googleMapRef.current) {
-      const currentZoom = googleMapRef.current.getZoom() || position.zoom;
-      const newZoom = direction === 'in' ? currentZoom + 1 : currentZoom - 1;
-      googleMapRef.current.setZoom(newZoom);
-      
-      setPosition(prev => ({
-        ...prev,
-        zoom: newZoom
-      }));
-      
-      toast.info(`Zoom level: ${newZoom}`);
-    }
+    const currentZoom = position.zoom;
+    const newZoom = direction === 'in' ? currentZoom + 1 : currentZoom - 1;
+    
+    setPosition(prev => ({
+      ...prev,
+      zoom: newZoom
+    }));
+    
+    toast.info(`Zoom level: ${newZoom}`);
   };
 
   const toggleMapStyle = () => {
     const newStyle = mapStyle === 'streets' ? 'satellite' : 'streets';
     setMapStyle(newStyle);
-    
-    if (googleMapRef.current && window.google && window.google.maps) {
-      googleMapRef.current.setMapTypeId(
-        newStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP
-      );
-    }
-    
     toast.info(`Switched to ${newStyle} view`);
   };
 
@@ -374,17 +271,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
       zoom: selectedCity.zoom 
     });
     
-    if (googleMapRef.current) {
-      try {
-        googleMapRef.current.setCenter({ lat: selectedCity.lat, lng: selectedCity.lng });
-        googleMapRef.current.setZoom(selectedCity.zoom);
-        
-        setTimeout(() => addPotholeMarkers(), 500);
-      } catch (error) {
-        console.error("Error changing region:", error);
-      }
-    }
-    
+    setTimeout(() => addPotholeMarkers(), 500);
     toast.success(`Map region updated to ${region}`);
   };
 
@@ -394,24 +281,13 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
       [layer]: !prev[layer]
     }));
     
-    if (layer === 'traffic' && googleMapRef.current && window.google && window.google.maps) {
-      try {
-        if (!visibleLayers.traffic) {
-          trafficLayerRef.current = new google.maps.TrafficLayer();
-          trafficLayerRef.current.setMap(googleMapRef.current);
-        } else if (trafficLayerRef.current) {
-          trafficLayerRef.current.setMap(null);
-          trafficLayerRef.current = null;
-        }
-      } catch (error) {
-        console.error("Error toggling traffic layer:", error);
-      }
-    }
-    
     if (layer === 'potholes') {
-      markerRefs.current.forEach(marker => {
-        marker.setVisible(!visibleLayers.potholes);
-      });
+      setMapMarkers(prev => 
+        prev.map(marker => ({ 
+          ...marker, 
+          visible: marker.isUser ? true : !visibleLayers.potholes 
+        }))
+      );
     }
     
     toast.info(`${visibleLayers[layer] ? 'Hidden' : 'Showing'} ${layer} layer`);
@@ -441,8 +317,8 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   if (!googleMapsApiKey) {
     return (
       <div className="p-4 border border-red-500 rounded-md bg-red-50 text-red-700">
-        <h2 className="text-lg font-bold mb-2">Error: Google Maps API Key Missing</h2>
-        <p>Please provide a valid Google Maps API key to load the map.</p>
+        <h2 className="text-lg font-bold mb-2">Error: Map API Key Missing</h2>
+        <p>Please provide a valid Map API key to load the map.</p>
       </div>
     );
   }
@@ -494,7 +370,58 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                 </div>
               )}
               
-              {/* Google Maps will render here once loaded */}
+              {/* Simulated map rendering */}
+              {mapLoaded && (
+                <div className="h-full w-full bg-gray-100 relative">
+                  {/* Base map layer - changes based on mapStyle */}
+                  <div 
+                    className={`absolute inset-0 ${mapStyle === 'satellite' ? 'bg-[url("/satellite-map-bg.jpg")]' : 'bg-[#f2f2f2]'}`}
+                    style={{ 
+                      backgroundImage: mapStyle === 'satellite' ? 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2))' : '',
+                      backgroundSize: 'cover',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                  >
+                    {/* Map grid lines */}
+                    <div className="absolute inset-0 grid grid-cols-8 grid-rows-8">
+                      {Array.from({ length: 64 }).map((_, idx) => (
+                        <div key={idx} className="border border-gray-300/20"></div>
+                      ))}
+                    </div>
+                    
+                    {/* Road Quality Overlay */}
+                    {visibleLayers.roadQuality && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-yellow-500/20 to-red-500/20"></div>
+                    )}
+                    
+                    {/* Traffic Overlay */}
+                    {visibleLayers.traffic && (
+                      <TrafficOverlay density={trafficDensity} />
+                    )}
+                    
+                    {/* Markers */}
+                    {mapMarkers.filter(marker => marker.visible).map((marker) => (
+                      <div 
+                        key={marker.id}
+                        className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                        style={{ 
+                          left: `${50 + (marker.position.lng - position.longitude) * 50}%`, 
+                          top: `${50 - (marker.position.lat - position.latitude) * 50}%`
+                        }}
+                      >
+                        <div 
+                          className={`rounded-full ${marker.isUser ? 'h-4 w-4 border-2 border-white pulse-animation' : 'h-3 w-3'}`}
+                          style={{ backgroundColor: marker.color }}
+                        />
+                        {/* For debugging - show marker title on hover */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                          {marker.title}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             <MapControls 
@@ -785,8 +712,8 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                     <div key={pothole.id} className="flex items-center gap-2 p-2 bg-white rounded border">
                       <div className={cn(
                         "h-3 w-3 rounded-full",
-                        pothole.severity === 'high' ? "bg-severity-high" : 
-                        pothole.severity === 'medium' ? "bg-severity-medium" : "bg-severity-low"
+                        pothole.severity === 'high' ? "bg-red-500" : 
+                        pothole.severity === 'medium' ? "bg-yellow-500" : "bg-green-500"
                       )}></div>
                       <div className="flex-1 text-sm truncate">{pothole.address}</div>
                       <Badge variant={
@@ -812,3 +739,4 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
 };
 
 export default Map;
+
