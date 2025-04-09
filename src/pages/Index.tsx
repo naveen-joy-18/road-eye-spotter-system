@@ -56,6 +56,11 @@ const Index: React.FC = () => {
         <TabsContent value="dashboard" className="m-0">
           <Dashboard />
         </TabsContent>
+        
+        {/* Add TabsContent for video tab to handle navigation from Layout */}
+        <TabsContent value="video" className="m-0">
+          {/* This will be empty since video content is on VideoAnalysisPage */}
+        </TabsContent>
       </Tabs>
     </Layout>
   );
