@@ -49,7 +49,6 @@ interface VideoAnalysisProps {
   onPotholeDetected?: (severity: AlertSeverity, distance: number) => void;
 }
 
-// Sample video URL for demo purposes
 const DEMO_VIDEO_URL = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
 
 const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPotholeDetected }) => {
@@ -82,7 +81,6 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
   const statsIntervalRef = useRef<number | null>(null);
   const processTimeoutRef = useRef<number | null>(null);
   
-  // Use demo video if no video is uploaded
   useEffect(() => {
     if (!videoUrl && !videoFile) {
       setVideoUrl(DEMO_VIDEO_URL);
@@ -121,11 +119,9 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
     }
   }, [isSimulating, onSimulationChange]);
   
-  // Handle video load event
   const handleVideoLoad = () => {
     setIsVideoLoaded(true);
     if (!detections.length && !isProcessing) {
-      // Auto-process video once loaded if not already processed
       simulateProcessing();
     }
   };
@@ -805,4 +801,88 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
             <TabsContent value="settings">
               <div className="space-y-6 p-4 border border-border rounded-md">
                 <div className="space-y-2">
-                  <h3 className
+                  <h3 className="text-lg font-medium">Detection Settings</h3>
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <label className="text-sm font-medium">Detection Sensitivity</label>
+                        <span className="text-xs text-muted-foreground">{sensitivityLevel}%</span>
+                      </div>
+                      <Slider 
+                        value={[sensitivityLevel]} 
+                        min={0} 
+                        max={100} 
+                        step={1}
+                        onValueChange={(v) => setSensitivityLevel(v[0])}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Higher sensitivity detects more potholes but may increase false positives
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <label className="text-sm font-medium">Confidence Threshold</label>
+                        <span className="text-xs text-muted-foreground">{detectionThreshold}%</span>
+                      </div>
+                      <Slider 
+                        value={[detectionThreshold]} 
+                        min={0} 
+                        max={100} 
+                        step={1}
+                        onValueChange={(v) => setDetectionThreshold(v[0])}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Only show detections with confidence above this threshold
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="analytics">
+              <div className="space-y-6 p-4 border border-border rounded-md">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Processing Analytics</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-muted/20 rounded-md">
+                      <div className="text-sm font-medium">Processing Speed</div>
+                      <div className="text-2xl font-bold mt-1">{processingStats.framesPerSecond} FPS</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Frames processed per second
+                      </div>
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded-md">
+                      <div className="text-sm font-medium">Model Accuracy</div>
+                      <div className="text-2xl font-bold mt-1">{processingStats.detectionAccuracy.toFixed(1)}%</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Based on training data
+                      </div>
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded-md">
+                      <div className="text-sm font-medium">Memory Usage</div>
+                      <div className="text-2xl font-bold mt-1">{processingStats.memoryUsage.toFixed(0)} MB</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        RAM used by ML model
+                      </div>
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded-md">
+                      <div className="text-sm font-medium">Processed Frames</div>
+                      <div className="text-2xl font-bold mt-1">{processingStats.framesProcessed}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Total frames analyzed
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default VideoAnalysis;
