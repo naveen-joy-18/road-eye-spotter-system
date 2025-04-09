@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPosition } from '@/types';
 import PotholeMarker from './PotholeMarker';
@@ -79,13 +80,15 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
       return;
     }
 
+    // Check if Google Maps API is already loaded
     if (window.google && window.google.maps) {
       initializeMap();
       return;
     }
 
+    // Load the Google Maps API script with the proper loading pattern
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&loading=async`;
     script.async = true;
     script.defer = true;
     script.onload = initializeMap;

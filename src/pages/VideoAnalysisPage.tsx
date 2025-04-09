@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import VideoAnalysisWithAlerts from '@/components/VideoAnalysisWithAlerts';
 import { Toaster } from 'sonner';
-import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const VideoAnalysisPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('video');
@@ -17,7 +17,14 @@ const VideoAnalysisPage: React.FC = () => {
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="container mx-auto py-6">
-        <Tabs value={activeTab} className="w-full">
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="hidden">
+            <TabsTrigger value="video">Video Analysis</TabsTrigger>
+            <TabsTrigger value="map">Map</TabsTrigger>
+            <TabsTrigger value="report">Report</TabsTrigger>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          </TabsList>
+          
           <TabsContent value="video">
             <VideoAnalysisWithAlerts />
           </TabsContent>
