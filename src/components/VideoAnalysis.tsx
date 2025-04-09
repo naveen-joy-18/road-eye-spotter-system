@@ -805,4 +805,4 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
             <TabsContent value="settings">
               <div className="space-y-6 p-4 border border-border rounded-md">
                 <div className="space-y-2">
-                  <div className="
+                  <h3 className
