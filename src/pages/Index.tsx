@@ -15,6 +15,11 @@ const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState('map');
   // Add a state to track simulation status for DriverAlerts
   const [simulationActive, setSimulationActive] = useState(false);
+  
+  // Set document title for the app
+  React.useEffect(() => {
+    document.title = "ROADSENSE AI - Road Monitoring System";
+  }, []);
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
@@ -22,7 +27,7 @@ const Index: React.FC = () => {
         <TabsContent value="map" className="m-0">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <Map />
+              <Map googleMapsApiKey="AIzaSyBaBEjbxIwSyPVLXplT0caOLUYY0hrqC9I" />
             </div>
             <div className="lg:col-span-1 space-y-6">
               <PotholeList />
@@ -34,7 +39,6 @@ const Index: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* Pass the required simulationActive prop */}
                   <DriverAlerts simulationActive={simulationActive} />
                 </CardContent>
               </Card>

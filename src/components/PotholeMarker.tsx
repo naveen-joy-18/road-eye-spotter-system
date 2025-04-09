@@ -12,9 +12,10 @@ import { cn } from '@/lib/utils';
 
 interface PotholeMarkerProps {
   pothole: Pothole;
+  position?: { left: string; top: string }; // Allow position override
 }
 
-const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole }) => {
+const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Map severity to appropriate colors
@@ -31,10 +32,9 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole }) => {
     resolved: 'Resolved'
   };
 
-  // In a real implementation, we'd position this based on map coordinates
-  // For now, using random position for demonstration
-  const leftPosition = Math.random() * 80 + 10; // Random position 10-90%
-  const topPosition = Math.random() * 80 + 10; // Random position 10-90%
+  // Use provided position or generate random position for demonstration
+  const leftPosition = position?.left || `${Math.random() * 80 + 10}%`;
+  const topPosition = position?.top || `${Math.random() * 80 + 10}%`;
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -45,8 +45,8 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole }) => {
             severityColor[pothole.severity]
           )}
           style={{ 
-            left: `${leftPosition}%`, 
-            top: `${topPosition}%` 
+            left: leftPosition, 
+            top: topPosition 
           }}
         >
           <div className="flex flex-col items-center">

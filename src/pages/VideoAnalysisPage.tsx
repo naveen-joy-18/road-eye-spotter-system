@@ -11,6 +11,7 @@ const VideoAnalysisPage: React.FC = () => {
   // Ensure the layout knows this is the video tab
   useEffect(() => {
     setActiveTab('video');
+    document.title = "ROADSENSE AI - Video Analysis";
   }, []);
 
   return (

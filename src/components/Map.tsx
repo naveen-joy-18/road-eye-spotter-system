@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPosition } from '@/types';
 import PotholeMarker from './PotholeMarker';
@@ -24,8 +23,13 @@ import { TrafficOverlay } from './map/TrafficOverlay';
 import { MapLegend } from './map/MapLegend';
 import { MapInfoPanel } from './map/MapInfoPanel';
 
-const Map: React.FC = () => {
+interface MapProps {
+  googleMapsApiKey?: string;
+}
+
+const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const googleMapRef = useRef<google.maps.Map | null>(null);
   const [position, setPosition] = useState<MapPosition>({
     latitude: 20.5937, // Central India coordinates
     longitude: 78.9629,
@@ -54,41 +58,145 @@ const Map: React.FC = () => {
   const [speedLimit, setSpeedLimit] = useState<number>(60);
   const [showSpeedometer, setShowSpeedometer] = useState<boolean>(true);
   const [compassHeading, setCompassHeading] = useState<number>(0);
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  
+  const indianCities = [
+    { name: "All India", lat: 20.5937, lng: 78.9629, zoom: 5 },
+    { name: "Delhi", lat: 28.6139, lng: 77.2090, zoom: 12 },
+    { name: "Mumbai", lat: 19.0760, lng: 72.8777, zoom: 12 },
+    { name: "Bangalore", lat: 12.9716, lng: 77.5946, zoom: 12 },
+    { name: "Chennai", lat: 13.0827, lng: 80.2707, zoom: 12 },
+    { name: "Kolkata", lat: 22.5726, lng: 88.3639, zoom: 12 },
+    { name: "Hyderabad", lat: 17.3850, lng: 78.4867, zoom: 12 },
+    { name: "Pune", lat: 18.5204, lng: 73.8567, zoom: 12 },
+    { name: "Ahmedabad", lat: 23.0225, lng: 72.5714, zoom: 12 },
+    { name: "Jaipur", lat: 26.9124, lng: 75.7873, zoom: 12 }
+  ];
 
   useEffect(() => {
-    if (mapRef.current) {
-      // Simulate loading progress
-      const interval = setInterval(() => {
-        setMapProgress(prev => {
-          const newProgress = prev + 10;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setMapLoaded(true);
-              setRoadDamageStats({
-                total: potholes.length,
-                critical: potholes.filter(p => p.severity === 'high').length,
-                moderate: potholes.filter(p => p.severity === 'medium').length,
-                minor: potholes.filter(p => p.severity === 'low').length
-              });
-            }, 500);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 150);
-
-      // Simulate compass rotation
-      const compassInterval = setInterval(() => {
-        setCompassHeading(prev => (prev + 1) % 360);
-      }, 100);
-
-      return () => {
-        clearInterval(interval);
-        clearInterval(compassInterval);
-      };
+    if (!googleMapsApiKey) {
+      console.error("Google Maps API key is missing");
+      return;
     }
-  }, []);
+
+    if (window.google && window.google.maps) {
+      initializeMap();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeMap;
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, [googleMapsApiKey]);
+
+  const initializeMap = () => {
+    if (!mapRef.current || !window.google) return;
+
+    const interval = setInterval(() => {
+      setMapProgress(prev => {
+        const newProgress = prev + 10;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setMapLoaded(true);
+            setRoadDamageStats({
+              total: potholes.length,
+              critical: potholes.filter(p => p.severity === 'high').length,
+              moderate: potholes.filter(p => p.severity === 'medium').length,
+              minor: potholes.filter(p => p.severity === 'low').length
+            });
+            
+            googleMapRef.current = new google.maps.Map(mapRef.current, {
+              center: { lat: position.latitude, lng: position.longitude },
+              zoom: position.zoom,
+              mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
+              fullscreenControl: false,
+              mapTypeControl: false,
+              streetViewControl: false,
+            });
+            
+            addPotholeMarkers();
+            
+            if (visibleLayers.traffic) {
+              const trafficLayer = new google.maps.TrafficLayer();
+              trafficLayer.setMap(googleMapRef.current);
+            }
+            
+          }, 500);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 150);
+
+    const compassInterval = setInterval(() => {
+      setCompassHeading(prev => (prev + 1) % 360);
+    }, 100);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(compassInterval);
+    };
+  };
+
+  const addPotholeMarkers = () => {
+    if (!googleMapRef.current) return;
+    
+    markers.forEach(marker => marker.setMap(null));
+    
+    const newMarkers = potholes.map(pothole => {
+      const center = googleMapRef.current?.getCenter();
+      const lat = center ? center.lat() + (Math.random() - 0.5) * 0.05 : position.latitude;
+      const lng = center ? center.lng() + (Math.random() - 0.5) * 0.05 : position.longitude;
+      
+      const markerColor = pothole.severity === 'high' ? 'red' : 
+                        pothole.severity === 'medium' ? 'orange' : 'green';
+      
+      const marker = new google.maps.Marker({
+        position: { lat, lng },
+        map: googleMapRef.current,
+        title: `Pothole: ${pothole.address}`,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: markerColor,
+          fillOpacity: 0.8,
+          strokeWeight: 2,
+          strokeColor: 'white',
+          scale: 10
+        }
+      });
+      
+      const infoContent = `
+        <div style="padding: 10px; max-width: 200px;">
+          <h3 style="margin: 0 0 5px 0;">${pothole.severity.charAt(0).toUpperCase() + pothole.severity.slice(1)} Severity Pothole</h3>
+          <p style="margin: 0 0 5px 0;">${pothole.address}</p>
+          <p style="margin: 0; font-size: 12px;">Reported: ${new Date(pothole.reportedAt).toLocaleDateString()}</p>
+          <p style="margin: 5px 0 0 0; font-size: 12px;">Status: ${pothole.status}</p>
+        </div>
+      `;
+      
+      const infoWindow = new google.maps.InfoWindow({
+        content: infoContent
+      });
+      
+      marker.addListener('click', () => {
+        infoWindow.open(googleMapRef.current, marker);
+      });
+      
+      return marker;
+    });
+    
+    setMarkers(newMarkers);
+  };
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -102,6 +210,26 @@ const Map: React.FC = () => {
             longitude,
             zoom: 15
           });
+          
+          if (googleMapRef.current) {
+            googleMapRef.current.setCenter({ lat: latitude, lng: longitude });
+            googleMapRef.current.setZoom(15);
+            
+            new google.maps.Marker({
+              position: { lat: latitude, lng: longitude },
+              map: googleMapRef.current,
+              title: 'Your Location',
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: '#4285F4',
+                fillOpacity: 0.9,
+                strokeWeight: 2,
+                strokeColor: 'white',
+                scale: 12
+              }
+            });
+          }
+          
           toast.success('Location found! Centered map at your position.');
         },
         (error) => {
@@ -115,23 +243,31 @@ const Map: React.FC = () => {
   };
 
   const handleZoom = (direction: 'in' | 'out') => {
-    setPosition(prev => {
-      const newZoom = direction === 'in' 
-        ? Math.min(prev.zoom + 1, 20) 
-        : Math.max(prev.zoom - 1, 1);
-        
-      toast.info(`Zoom level: ${newZoom}`);
+    if (googleMapRef.current) {
+      const currentZoom = googleMapRef.current.getZoom() || position.zoom;
+      const newZoom = direction === 'in' ? currentZoom + 1 : currentZoom - 1;
+      googleMapRef.current.setZoom(newZoom);
       
-      return {
+      setPosition(prev => ({
         ...prev,
         zoom: newZoom
-      };
-    });
+      }));
+      
+      toast.info(`Zoom level: ${newZoom}`);
+    }
   };
 
   const toggleMapStyle = () => {
-    setMapStyle(prev => prev === 'streets' ? 'satellite' : 'streets');
-    toast.info(`Switched to ${mapStyle === 'streets' ? 'satellite' : 'streets'} view`);
+    const newStyle = mapStyle === 'streets' ? 'satellite' : 'streets';
+    setMapStyle(newStyle);
+    
+    if (googleMapRef.current) {
+      googleMapRef.current.setMapTypeId(
+        newStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP
+      );
+    }
+    
+    toast.info(`Switched to ${newStyle} view`);
   };
 
   const toggleRoadQualityView = () => {
@@ -140,6 +276,7 @@ const Map: React.FC = () => {
       ...prev,
       roadQuality: !prev.roadQuality
     }));
+    
     toast.info(roadQualityView ? 'Standard map view activated' : 'Road quality heatmap activated');
   };
 
@@ -148,31 +285,43 @@ const Map: React.FC = () => {
       ...prev,
       [layer]: !prev[layer]
     }));
+    
+    if (layer === 'traffic' && googleMapRef.current) {
+      if (!visibleLayers.traffic) {
+        const trafficLayer = new google.maps.TrafficLayer();
+        trafficLayer.setMap(googleMapRef.current);
+      } else {
+        if (googleMapRef.current) {
+          googleMapRef.current.setMapTypeId(googleMapRef.current.getMapTypeId());
+        }
+      }
+    }
+    
+    if (layer === 'potholes') {
+      markers.forEach(marker => {
+        marker.setVisible(!visibleLayers.potholes);
+      });
+    }
+    
     toast.info(`${visibleLayers[layer] ? 'Hidden' : 'Showing'} ${layer} layer`);
   };
 
   const handleRegionChange = (region: string) => {
     setMapRegion(region);
     
-    // Set coordinates based on selected region
-    switch(region) {
-      case "North India":
-        setPosition({ latitude: 28.6139, longitude: 77.2090, zoom: 7 }); // Delhi
-        break;
-      case "South India":
-        setPosition({ latitude: 13.0827, longitude: 80.2707, zoom: 7 }); // Chennai
-        break;
-      case "East India":
-        setPosition({ latitude: 22.5726, longitude: 88.3639, zoom: 7 }); // Kolkata
-        break;
-      case "West India":
-        setPosition({ latitude: 19.0760, longitude: 72.8777, zoom: 7 }); // Mumbai
-        break;
-      case "Central India":
-        setPosition({ latitude: 23.2599, longitude: 77.4126, zoom: 7 }); // Bhopal
-        break;
-      default:
-        setPosition({ latitude: 20.5937, longitude: 78.9629, zoom: 5 }); // All India
+    const selectedCity = indianCities.find(city => city.name === region) || indianCities[0];
+    
+    setPosition({ 
+      latitude: selectedCity.lat, 
+      longitude: selectedCity.lng, 
+      zoom: selectedCity.zoom 
+    });
+    
+    if (googleMapRef.current) {
+      googleMapRef.current.setCenter({ lat: selectedCity.lat, lng: selectedCity.lng });
+      googleMapRef.current.setZoom(selectedCity.zoom);
+      
+      setTimeout(() => addPotholeMarkers(), 500);
     }
     
     toast.success(`Map region updated to ${region}`);
@@ -183,10 +332,10 @@ const Map: React.FC = () => {
       position,
       potholes: visibleLayers.potholes ? potholes : [],
       trafficDensity: visibleLayers.traffic ? trafficDensity : 0,
-      roadQuality: visibleLayers.roadQuality
+      roadQuality: visibleLayers.roadQuality,
+      region: mapRegion
     };
     
-    // Create a downloadable file
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(mapData));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -221,14 +370,6 @@ const Map: React.FC = () => {
             <div 
               ref={mapRef} 
               className="absolute inset-0 bg-gray-200 transition-all duration-500"
-              style={{
-                backgroundImage: mapStyle === 'streets'
-                  ? `url("https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${position.longitude},${position.latitude},${position.zoom},0/600x600?access_token=placeholder")`
-                  : `url("https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${position.longitude},${position.latitude},${position.zoom},0/600x600?access_token=placeholder")`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: roadQualityView ? 'hue-rotate(180deg) brightness(0.8)' : 'none'
-              }}
             >
               {!mapLoaded && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -248,38 +389,7 @@ const Map: React.FC = () => {
                 </div>
               )}
               
-              {mapLoaded && roadQualityView && (
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-red-500/20 to-transparent"></div>
-                  <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-gradient-to-tl from-yellow-500/30 to-transparent rounded-full blur-xl"></div>
-                  <div className="absolute top-1/4 left-1/3 w-1/4 h-1/4 bg-gradient-to-br from-green-500/20 to-transparent rounded-full blur-lg"></div>
-                </div>
-              )}
-              
-              {mapLoaded && visibleLayers.potholes && potholes.map((pothole) => (
-                <PotholeMarker key={pothole.id} pothole={pothole} />
-              ))}
-
-              {mapLoaded && userLocation && (
-                <div 
-                  className="absolute z-10 animate-pulse"
-                  style={{ 
-                    left: '50%',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)'
-                  }}
-                >
-                  <div className="h-4 w-4 rounded-full bg-blue-500 border-2 border-white"></div>
-                  <div className="h-10 w-10 rounded-full bg-blue-500/20 absolute -left-3 -top-3"></div>
-                  <div className="mt-2 px-2 py-1 bg-white/90 rounded text-xs font-medium shadow">
-                    Your Location
-                  </div>
-                </div>
-              )}
-
-              {mapLoaded && visibleLayers.traffic && (
-                <TrafficOverlay density={trafficDensity} />
-              )}
+              {/* Google Maps will render here once loaded */}
             </div>
             
             <MapControls 
@@ -332,7 +442,7 @@ const Map: React.FC = () => {
             </div>
             
             <div className="absolute bottom-16 right-2 text-xs text-gray-600 bg-white/80 px-2 py-1 rounded">
-              Map data © {new Date().getFullYear()} Contributors | India Road Network
+              Map data © {new Date().getFullYear()} ROADSENSE AI | India Road Network
             </div>
 
             {mapLoaded && (
@@ -341,7 +451,6 @@ const Map: React.FC = () => {
               />
             )}
 
-            {/* Region Selector */}
             <div className="absolute top-16 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-md shadow-md">
               <Popover>
                 <PopoverTrigger asChild>
@@ -352,15 +461,15 @@ const Map: React.FC = () => {
                 </PopoverTrigger>
                 <PopoverContent className="p-0 w-48">
                   <div className="p-1">
-                    {["All India", "North India", "South India", "East India", "West India", "Central India"].map(region => (
+                    {indianCities.map(city => (
                       <Button
-                        key={region}
+                        key={city.name}
                         variant="ghost"
                         size="sm"
                         className="w-full justify-start text-left font-normal"
-                        onClick={() => handleRegionChange(region)}
+                        onClick={() => handleRegionChange(city.name)}
                       >
-                        {region}
+                        {city.name}
                       </Button>
                     ))}
                   </div>
@@ -368,7 +477,6 @@ const Map: React.FC = () => {
               </Popover>
             </div>
 
-            {/* Layer Controls */}
             <div className="absolute top-32 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-md shadow-md">
               <h4 className="font-medium text-sm mb-2">Map Layers</h4>
               <div className="space-y-2">
@@ -423,13 +531,11 @@ const Map: React.FC = () => {
               </div>
             </div>
 
-            {/* Date Display */}
             <div className="absolute top-4 right-20 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-xs flex items-center">
               <Calendar className="h-3 w-3 mr-1" />
               {new Date().toLocaleDateString('en-IN')}
             </div>
 
-            {/* Legend */}
             <MapLegend />
           </div>
         </TabsContent>
