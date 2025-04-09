@@ -10,14 +10,13 @@ const VideoAnalysisPage: React.FC = () => {
 
   // Ensure the layout knows this is the video tab
   useEffect(() => {
-    setActiveTab('video');
     document.title = "ROADSENSE AI - Video Analysis";
   }, []);
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="container mx-auto py-6">
-        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="video" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="hidden">
             <TabsTrigger value="video">Video Analysis</TabsTrigger>
             <TabsTrigger value="map">Map</TabsTrigger>

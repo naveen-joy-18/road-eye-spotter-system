@@ -55,6 +55,8 @@ const VideoAnalysisWithAlerts: React.FC = () => {
   
   // Process alerts when they change
   useEffect(() => {
+    let timer: number | null = null;
+    
     if (currentAlert) {
       // This would normally come from the VideoAnalysis component
       // but we're simulating it here for demonstration purposes
@@ -64,12 +66,14 @@ const VideoAnalysisWithAlerts: React.FC = () => {
       });
       
       // Clear alert after display
-      const timer = setTimeout(() => {
+      timer = window.setTimeout(() => {
         setCurrentAlert(null);
       }, 5000);
-      
-      return () => clearTimeout(timer);
     }
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [currentAlert]);
 
   return (

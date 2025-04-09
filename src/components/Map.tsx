@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPosition } from '@/types';
 import PotholeMarker from './PotholeMarker';
@@ -61,6 +60,10 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [compassHeading, setCompassHeading] = useState<number>(0);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   
+  const markerRefs = useRef<google.maps.Marker[]>([]);
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const trafficLayerRef = useRef<google.maps.TrafficLayer | null>(null);
+  
   const indianCities = [
     { name: "All India", lat: 20.5937, lng: 78.9629, zoom: 5 },
     { name: "Delhi", lat: 28.6139, lng: 77.2090, zoom: 12 },
@@ -80,10 +83,36 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
       return;
     }
 
+    // Cleanup function to handle component unmount properly
+    const cleanup = () => {
+      if (markerRefs.current) {
+        markerRefs.current.forEach(marker => marker?.setMap(null));
+        markerRefs.current = [];
+      }
+      
+      if (trafficLayerRef.current) {
+        trafficLayerRef.current.setMap(null);
+        trafficLayerRef.current = null;
+      }
+      
+      if (googleMapRef.current) {
+        // No direct way to destroy the map, but we can clear references
+        googleMapRef.current = null;
+      }
+      
+      // Remove the script if it was added by this component
+      if (scriptRef.current && document.head.contains(scriptRef.current)) {
+        document.head.removeChild(scriptRef.current);
+        scriptRef.current = null;
+        // Remove global google object reference
+        delete window.google;
+      }
+    };
+
     // Check if Google Maps API is already loaded
     if (window.google && window.google.maps) {
       initializeMap();
-      return;
+      return cleanup;
     }
 
     // Load the Google Maps API script with the proper loading pattern
@@ -93,16 +122,13 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     script.defer = true;
     script.onload = initializeMap;
     document.head.appendChild(script);
+    scriptRef.current = script;
 
-    return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-    };
+    return cleanup;
   }, [googleMapsApiKey]);
 
   const initializeMap = () => {
-    if (!mapRef.current || !window.google) return;
+    if (!mapRef.current || !window.google || !window.google.maps) return;
 
     const interval = setInterval(() => {
       setMapProgress(prev => {
@@ -118,20 +144,25 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               minor: potholes.filter(p => p.severity === 'low').length
             });
             
-            googleMapRef.current = new google.maps.Map(mapRef.current, {
-              center: { lat: position.latitude, lng: position.longitude },
-              zoom: position.zoom,
-              mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
-              fullscreenControl: false,
-              mapTypeControl: false,
-              streetViewControl: false,
-            });
-            
-            addPotholeMarkers();
-            
-            if (visibleLayers.traffic) {
-              const trafficLayer = new google.maps.TrafficLayer();
-              trafficLayer.setMap(googleMapRef.current);
+            try {
+              googleMapRef.current = new google.maps.Map(mapRef.current!, {
+                center: { lat: position.latitude, lng: position.longitude },
+                zoom: position.zoom,
+                mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
+                fullscreenControl: false,
+                mapTypeControl: false,
+                streetViewControl: false,
+              });
+              
+              addPotholeMarkers();
+              
+              if (visibleLayers.traffic) {
+                trafficLayerRef.current = new google.maps.TrafficLayer();
+                trafficLayerRef.current.setMap(googleMapRef.current);
+              }
+            } catch (error) {
+              console.error("Error initializing Google Maps:", error);
+              toast.error("Failed to load map");
             }
             
           }, 500);
@@ -152,53 +183,60 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   };
 
   const addPotholeMarkers = () => {
-    if (!googleMapRef.current) return;
+    if (!googleMapRef.current || !window.google || !window.google.maps) return;
     
-    markers.forEach(marker => marker.setMap(null));
+    // Clear previous markers
+    markerRefs.current.forEach(marker => marker.setMap(null));
+    markerRefs.current = [];
     
     const newMarkers = potholes.map(pothole => {
-      const center = googleMapRef.current?.getCenter();
-      const lat = center ? center.lat() + (Math.random() - 0.5) * 0.05 : position.latitude;
-      const lng = center ? center.lng() + (Math.random() - 0.5) * 0.05 : position.longitude;
-      
-      const markerColor = pothole.severity === 'high' ? 'red' : 
-                        pothole.severity === 'medium' ? 'orange' : 'green';
-      
-      const marker = new google.maps.Marker({
-        position: { lat, lng },
-        map: googleMapRef.current,
-        title: `Pothole: ${pothole.address}`,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: markerColor,
-          fillOpacity: 0.8,
-          strokeWeight: 2,
-          strokeColor: 'white',
-          scale: 10
-        }
-      });
-      
-      const infoContent = `
-        <div style="padding: 10px; max-width: 200px;">
-          <h3 style="margin: 0 0 5px 0;">${pothole.severity.charAt(0).toUpperCase() + pothole.severity.slice(1)} Severity Pothole</h3>
-          <p style="margin: 0 0 5px 0;">${pothole.address}</p>
-          <p style="margin: 0; font-size: 12px;">Reported: ${new Date(pothole.reportedAt).toLocaleDateString()}</p>
-          <p style="margin: 5px 0 0 0; font-size: 12px;">Status: ${pothole.status}</p>
-        </div>
-      `;
-      
-      const infoWindow = new google.maps.InfoWindow({
-        content: infoContent
-      });
-      
-      marker.addListener('click', () => {
-        infoWindow.open(googleMapRef.current, marker);
-      });
-      
-      return marker;
-    });
+      try {
+        const center = googleMapRef.current?.getCenter();
+        const lat = center ? center.lat() + (Math.random() - 0.5) * 0.05 : position.latitude;
+        const lng = center ? center.lng() + (Math.random() - 0.5) * 0.05 : position.longitude;
+        
+        const markerColor = pothole.severity === 'high' ? 'red' : 
+                          pothole.severity === 'medium' ? 'orange' : 'green';
+        
+        const marker = new google.maps.Marker({
+          position: { lat, lng },
+          map: googleMapRef.current!,
+          title: `Pothole: ${pothole.address}`,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: markerColor,
+            fillOpacity: 0.8,
+            strokeWeight: 2,
+            strokeColor: 'white',
+            scale: 10
+          }
+        });
+        
+        const infoContent = `
+          <div style="padding: 10px; max-width: 200px;">
+            <h3 style="margin: 0 0 5px 0;">${pothole.severity.charAt(0).toUpperCase() + pothole.severity.slice(1)} Severity Pothole</h3>
+            <p style="margin: 0 0 5px 0;">${pothole.address}</p>
+            <p style="margin: 0; font-size: 12px;">Reported: ${new Date(pothole.reportedAt).toLocaleDateString()}</p>
+            <p style="margin: 5px 0 0 0; font-size: 12px;">Status: ${pothole.status}</p>
+          </div>
+        `;
+        
+        const infoWindow = new google.maps.InfoWindow({
+          content: infoContent
+        });
+        
+        marker.addListener('click', () => {
+          infoWindow.open(googleMapRef.current!, marker);
+        });
+        
+        return marker;
+      } catch (error) {
+        console.error("Error creating marker:", error);
+        return null;
+      }
+    }).filter(Boolean) as google.maps.Marker[];
     
-    setMarkers(newMarkers);
+    markerRefs.current = newMarkers;
   };
 
   const getUserLocation = () => {
@@ -283,32 +321,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     toast.info(roadQualityView ? 'Standard map view activated' : 'Road quality heatmap activated');
   };
 
-  const toggleLayer = (layer: keyof typeof visibleLayers) => {
-    setVisibleLayers(prev => ({
-      ...prev,
-      [layer]: !prev[layer]
-    }));
-    
-    if (layer === 'traffic' && googleMapRef.current) {
-      if (!visibleLayers.traffic) {
-        const trafficLayer = new google.maps.TrafficLayer();
-        trafficLayer.setMap(googleMapRef.current);
-      } else {
-        if (googleMapRef.current) {
-          googleMapRef.current.setMapTypeId(googleMapRef.current.getMapTypeId());
-        }
-      }
-    }
-    
-    if (layer === 'potholes') {
-      markers.forEach(marker => {
-        marker.setVisible(!visibleLayers.potholes);
-      });
-    }
-    
-    toast.info(`${visibleLayers[layer] ? 'Hidden' : 'Showing'} ${layer} layer`);
-  };
-
   const handleRegionChange = (region: string) => {
     setMapRegion(region);
     
@@ -321,13 +333,46 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     });
     
     if (googleMapRef.current) {
-      googleMapRef.current.setCenter({ lat: selectedCity.lat, lng: selectedCity.lng });
-      googleMapRef.current.setZoom(selectedCity.zoom);
-      
-      setTimeout(() => addPotholeMarkers(), 500);
+      try {
+        googleMapRef.current.setCenter({ lat: selectedCity.lat, lng: selectedCity.lng });
+        googleMapRef.current.setZoom(selectedCity.zoom);
+        
+        setTimeout(() => addPotholeMarkers(), 500);
+      } catch (error) {
+        console.error("Error changing region:", error);
+      }
     }
     
     toast.success(`Map region updated to ${region}`);
+  };
+
+  const toggleLayer = (layer: keyof typeof visibleLayers) => {
+    setVisibleLayers(prev => ({
+      ...prev,
+      [layer]: !prev[layer]
+    }));
+    
+    if (layer === 'traffic' && googleMapRef.current && window.google && window.google.maps) {
+      try {
+        if (!visibleLayers.traffic) {
+          trafficLayerRef.current = new google.maps.TrafficLayer();
+          trafficLayerRef.current.setMap(googleMapRef.current);
+        } else if (trafficLayerRef.current) {
+          trafficLayerRef.current.setMap(null);
+          trafficLayerRef.current = null;
+        }
+      } catch (error) {
+        console.error("Error toggling traffic layer:", error);
+      }
+    }
+    
+    if (layer === 'potholes') {
+      markerRefs.current.forEach(marker => {
+        marker.setVisible(!visibleLayers.potholes);
+      });
+    }
+    
+    toast.info(`${visibleLayers[layer] ? 'Hidden' : 'Showing'} ${layer} layer`);
   };
 
   const downloadMapData = () => {
