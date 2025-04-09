@@ -16,7 +16,7 @@ const VideoAnalysisPage: React.FC = () => {
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="container mx-auto py-6">
-        <Tabs defaultValue="video" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="hidden">
             <TabsTrigger value="video">Video Analysis</TabsTrigger>
             <TabsTrigger value="map">Map</TabsTrigger>
@@ -27,9 +27,15 @@ const VideoAnalysisPage: React.FC = () => {
           <TabsContent value="video">
             <VideoAnalysisWithAlerts />
           </TabsContent>
-          <TabsContent value="map" />
-          <TabsContent value="report" />
-          <TabsContent value="dashboard" />
+          <TabsContent value="map">
+            {/* Map content will be rendered when this tab is active */}
+          </TabsContent>
+          <TabsContent value="report">
+            {/* Report content will be rendered when this tab is active */}
+          </TabsContent>
+          <TabsContent value="dashboard">
+            {/* Dashboard content will be rendered when this tab is active */}
+          </TabsContent>
         </Tabs>
         <Toaster />
       </div>

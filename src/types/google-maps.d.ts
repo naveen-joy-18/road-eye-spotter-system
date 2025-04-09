@@ -1,13 +1,12 @@
 
-// This is a simplified declaration for Google Maps API
+// This declaration file makes the Google Maps API types available globally
 declare global {
   interface Window {
     google: typeof google;
   }
 }
 
-// This is a simplified declaration for Google Maps API
-// A full declaration would be much more extensive
+// Main Google Maps namespace
 declare namespace google {
   namespace maps {
     class Map {
@@ -32,7 +31,7 @@ declare namespace google {
       getPosition(): LatLng;
       setTitle(title: string): void;
       setVisible(visible: boolean): void;
-      addListener(eventName: string, handler: Function): any;
+      addListener(eventName: string, handler: Function): MapsEventListener;
     }
 
     class InfoWindow {
@@ -53,9 +52,13 @@ declare namespace google {
       lng(): number;
     }
 
+    interface MapsEventListener {
+      remove(): void;
+    }
+
     const event: {
-      addListener(instance: any, eventName: string, handler: Function): any;
-      removeListener(listener: any): void;
+      addListener(instance: any, eventName: string, handler: Function): MapsEventListener;
+      removeListener(listener: MapsEventListener): void;
     };
 
     const SymbolPath: {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import VideoAnalysis from '@/components/VideoAnalysis';
 import DriverAlerts from '@/components/alerts/DriverAlerts';
 import DataManagement from '@/components/alerts/DataManagement';
@@ -16,6 +16,7 @@ const VideoAnalysisWithAlerts: React.FC = () => {
     message: string;
     severity: AlertSeverity;
   } | null>(null);
+  const alertTimerRef = useRef<number | null>(null);
 
   const handleSimulationChange = (simulating: boolean) => {
     setIsSimulating(simulating);
@@ -28,6 +29,12 @@ const VideoAnalysisWithAlerts: React.FC = () => {
     } else {
       toast.info("Driver alert system deactivated");
       setCurrentAlert(null);
+      
+      // Clear any pending timers
+      if (alertTimerRef.current) {
+        window.clearTimeout(alertTimerRef.current);
+        alertTimerRef.current = null;
+      }
     }
   };
   
@@ -55,8 +62,6 @@ const VideoAnalysisWithAlerts: React.FC = () => {
   
   // Process alerts when they change
   useEffect(() => {
-    let timer: number | null = null;
-    
     if (currentAlert) {
       // This would normally come from the VideoAnalysis component
       // but we're simulating it here for demonstration purposes
@@ -66,15 +71,29 @@ const VideoAnalysisWithAlerts: React.FC = () => {
       });
       
       // Clear alert after display
-      timer = window.setTimeout(() => {
+      alertTimerRef.current = window.setTimeout(() => {
         setCurrentAlert(null);
-      }, 5000);
+      }, 5000) as unknown as number;
     }
     
+    // Cleanup function to clear the timeout when component unmounts or alert changes
     return () => {
-      if (timer) clearTimeout(timer);
+      if (alertTimerRef.current) {
+        window.clearTimeout(alertTimerRef.current);
+        alertTimerRef.current = null;
+      }
     };
   }, [currentAlert]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (alertTimerRef.current) {
+        window.clearTimeout(alertTimerRef.current);
+        alertTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

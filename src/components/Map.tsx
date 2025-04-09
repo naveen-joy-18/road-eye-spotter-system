@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPosition } from '@/types';
 import PotholeMarker from './PotholeMarker';
@@ -26,6 +27,11 @@ import { MapInfoPanel } from './map/MapInfoPanel';
 interface MapProps {
   googleMapsApiKey?: string;
 }
+
+// Utility function to check if Google Maps API is loaded
+const isGoogleMapsLoaded = (): boolean => {
+  return typeof window !== 'undefined' && Boolean(window.google && window.google.maps);
+};
 
 const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -58,11 +64,13 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [speedLimit, setSpeedLimit] = useState<number>(60);
   const [showSpeedometer, setShowSpeedometer] = useState<boolean>(true);
   const [compassHeading, setCompassHeading] = useState<number>(0);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   
   const markerRefs = useRef<google.maps.Marker[]>([]);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const trafficLayerRef = useRef<google.maps.TrafficLayer | null>(null);
+  const mapEventListeners = useRef<google.maps.MapsEventListener[]>([]);
+  const loadingIntervalRef = useRef<number | null>(null);
+  const compassIntervalRef = useRef<number | null>(null);
   
   const indianCities = [
     { name: "All India", lat: 20.5937, lng: 78.9629, zoom: 5 },
@@ -85,37 +93,60 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
 
     // Cleanup function to handle component unmount properly
     const cleanup = () => {
-      if (markerRefs.current) {
-        markerRefs.current.forEach(marker => marker?.setMap(null));
+      // Clear all intervals
+      if (loadingIntervalRef.current) {
+        window.clearInterval(loadingIntervalRef.current);
+        loadingIntervalRef.current = null;
+      }
+      
+      if (compassIntervalRef.current) {
+        window.clearInterval(compassIntervalRef.current);
+        compassIntervalRef.current = null;
+      }
+      
+      // Remove event listeners
+      if (mapEventListeners.current.length > 0) {
+        mapEventListeners.current.forEach(listener => {
+          if (listener) {
+            listener.remove();
+          }
+        });
+        mapEventListeners.current = [];
+      }
+      
+      // Clear markers
+      if (markerRefs.current.length > 0) {
+        markerRefs.current.forEach(marker => {
+          if (marker) {
+            marker.setMap(null);
+          }
+        });
         markerRefs.current = [];
       }
       
+      // Remove traffic layer
       if (trafficLayerRef.current) {
         trafficLayerRef.current.setMap(null);
         trafficLayerRef.current = null;
       }
       
-      if (googleMapRef.current) {
-        // No direct way to destroy the map, but we can clear references
-        googleMapRef.current = null;
-      }
+      // Clear map reference
+      googleMapRef.current = null;
       
       // Remove the script if it was added by this component
       if (scriptRef.current && document.head.contains(scriptRef.current)) {
         document.head.removeChild(scriptRef.current);
         scriptRef.current = null;
-        // Remove global google object reference
-        delete window.google;
       }
     };
 
     // Check if Google Maps API is already loaded
-    if (window.google && window.google.maps) {
+    if (isGoogleMapsLoaded()) {
       initializeMap();
       return cleanup;
     }
 
-    // Load the Google Maps API script with the proper loading pattern
+    // Load the Google Maps API script
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&loading=async`;
     script.async = true;
@@ -128,7 +159,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   }, [googleMapsApiKey]);
 
   const initializeMap = () => {
-    if (!mapRef.current || !window.google || !window.google.maps) return;
+    if (!mapRef.current || !isGoogleMapsLoaded()) return;
 
     const interval = setInterval(() => {
       setMapProgress(prev => {
@@ -145,62 +176,75 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             });
             
             try {
-              googleMapRef.current = new google.maps.Map(mapRef.current!, {
-                center: { lat: position.latitude, lng: position.longitude },
-                zoom: position.zoom,
-                mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
-                fullscreenControl: false,
-                mapTypeControl: false,
-                streetViewControl: false,
-              });
-              
-              addPotholeMarkers();
-              
-              if (visibleLayers.traffic) {
-                trafficLayerRef.current = new google.maps.TrafficLayer();
-                trafficLayerRef.current.setMap(googleMapRef.current);
+              if (isGoogleMapsLoaded() && mapRef.current) {
+                googleMapRef.current = new google.maps.Map(mapRef.current, {
+                  center: { lat: position.latitude, lng: position.longitude },
+                  zoom: position.zoom,
+                  mapTypeId: mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP,
+                  fullscreenControl: false,
+                  mapTypeControl: false,
+                  streetViewControl: false,
+                });
+                
+                addPotholeMarkers();
+                
+                if (visibleLayers.traffic) {
+                  trafficLayerRef.current = new google.maps.TrafficLayer();
+                  trafficLayerRef.current.setMap(googleMapRef.current);
+                }
+                
+                // Add event listeners for map interactions
+                if (googleMapRef.current) {
+                  mapEventListeners.current.push(
+                    google.maps.event.addListener(googleMapRef.current, 'mousedown', () => {
+                      // Handle user interaction - placeholder for any future code
+                    })
+                  );
+                }
               }
             } catch (error) {
               console.error("Error initializing Google Maps:", error);
               toast.error("Failed to load map");
             }
-            
           }, 500);
           return 100;
         }
         return newProgress;
       });
     }, 150);
+    loadingIntervalRef.current = interval as unknown as number;
 
     const compassInterval = setInterval(() => {
       setCompassHeading(prev => (prev + 1) % 360);
     }, 100);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(compassInterval);
-    };
+    compassIntervalRef.current = compassInterval as unknown as number;
   };
 
   const addPotholeMarkers = () => {
-    if (!googleMapRef.current || !window.google || !window.google.maps) return;
+    if (!googleMapRef.current || !isGoogleMapsLoaded()) return;
     
     // Clear previous markers
-    markerRefs.current.forEach(marker => marker.setMap(null));
-    markerRefs.current = [];
+    if (markerRefs.current.length > 0) {
+      markerRefs.current.forEach(marker => {
+        if (marker) marker.setMap(null);
+      });
+      markerRefs.current = [];
+    }
     
-    const newMarkers = potholes.map(pothole => {
-      try {
-        const center = googleMapRef.current?.getCenter();
+    try {
+      const newMarkers = potholes.map(pothole => {
+        if (!googleMapRef.current || !isGoogleMapsLoaded()) return null;
+        
+        const center = googleMapRef.current.getCenter();
         const lat = center ? center.lat() + (Math.random() - 0.5) * 0.05 : position.latitude;
         const lng = center ? center.lng() + (Math.random() - 0.5) * 0.05 : position.longitude;
         
         const markerColor = pothole.severity === 'high' ? 'red' : 
-                          pothole.severity === 'medium' ? 'orange' : 'green';
+                           pothole.severity === 'medium' ? 'orange' : 'green';
         
         const marker = new google.maps.Marker({
           position: { lat, lng },
-          map: googleMapRef.current!,
+          map: googleMapRef.current,
           title: `Pothole: ${pothole.address}`,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
@@ -225,18 +269,20 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
           content: infoContent
         });
         
-        marker.addListener('click', () => {
-          infoWindow.open(googleMapRef.current!, marker);
-        });
+        mapEventListeners.current.push(
+          google.maps.event.addListener(marker, 'click', () => {
+            infoWindow.open(googleMapRef.current!, marker);
+          })
+        );
         
         return marker;
-      } catch (error) {
-        console.error("Error creating marker:", error);
-        return null;
-      }
-    }).filter(Boolean) as google.maps.Marker[];
-    
-    markerRefs.current = newMarkers;
+      }).filter(Boolean) as google.maps.Marker[];
+      
+      markerRefs.current = newMarkers;
+    } catch (error) {
+      console.error("Error creating markers:", error);
+      toast.error("Failed to create map markers");
+    }
   };
 
   const getUserLocation = () => {
@@ -256,19 +302,21 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             googleMapRef.current.setCenter({ lat: latitude, lng: longitude });
             googleMapRef.current.setZoom(15);
             
-            new google.maps.Marker({
-              position: { lat: latitude, lng: longitude },
-              map: googleMapRef.current,
-              title: 'Your Location',
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                fillColor: '#4285F4',
-                fillOpacity: 0.9,
-                strokeWeight: 2,
-                strokeColor: 'white',
-                scale: 12
-              }
-            });
+            if (isGoogleMapsLoaded()) {
+              new google.maps.Marker({
+                position: { lat: latitude, lng: longitude },
+                map: googleMapRef.current,
+                title: 'Your Location',
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  fillColor: '#4285F4',
+                  fillOpacity: 0.9,
+                  strokeWeight: 2,
+                  strokeColor: 'white',
+                  scale: 12
+                }
+              });
+            }
           }
           
           toast.success('Location found! Centered map at your position.');
@@ -302,7 +350,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     const newStyle = mapStyle === 'streets' ? 'satellite' : 'streets';
     setMapStyle(newStyle);
     
-    if (googleMapRef.current) {
+    if (googleMapRef.current && isGoogleMapsLoaded()) {
       googleMapRef.current.setMapTypeId(
         newStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP
       );
