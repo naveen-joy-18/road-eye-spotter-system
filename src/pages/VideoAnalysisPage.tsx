@@ -24,7 +24,7 @@ const VideoAnalysisPage: React.FC = () => {
   return (
     <Layout activeTab="video" onTabChange={(tab) => setActiveTab(tab)}>
       <div className="container mx-auto py-6">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs defaultValue="video" value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="video">Video Analysis</TabsTrigger>
             <TabsTrigger value="map">Map</TabsTrigger>
