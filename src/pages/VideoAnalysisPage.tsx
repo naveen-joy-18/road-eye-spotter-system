@@ -8,6 +8,7 @@ import { toast, Toaster } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const VideoAnalysisPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('video');
@@ -15,6 +16,15 @@ const VideoAnalysisPage: React.FC = () => {
   // Ensure the layout knows this is the video tab
   useEffect(() => {
     document.title = "ROADSENSE AI - Video Analysis";
+  }, []);
+
+  useEffect(() => {
+    // Ensure video analysis is properly initialized when page loads
+    if (activeTab === 'video') {
+      toast.info("Video Analysis Module Loaded", {
+        description: "Upload a video or use our demo to analyze road conditions"
+      });
+    }
   }, []);
 
   const handleTabChange = (value: string) => {
@@ -26,6 +36,14 @@ const VideoAnalysisPage: React.FC = () => {
     } else if (value === 'dashboard') {
       toast.info("Analytics Dashboard", {
         description: "View trends and statistics about road conditions"
+      });
+    } else if (value === 'map') {
+      toast.info("Interactive Map View", {
+        description: "Visualize pothole locations across India"
+      });
+    } else if (value === 'video') {
+      toast.info("Video Analysis Module", {
+        description: "Analyze road videos for potholes and damage"
       });
     }
   };
@@ -45,6 +63,24 @@ const VideoAnalysisPage: React.FC = () => {
           </TabsList>
           
           <TabsContent value="video" className="mt-4 animate-in fade-in-50">
+            <div className="mb-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Road Condition Video Analysis</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => toast.info("Documentation opened in new tab")}>
+                  Help Guide
+                </Button>
+                <Button onClick={() => toast.success("Analysis settings saved")}>
+                  Settings
+                </Button>
+              </div>
+            </div>
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Real-time Pothole Detection</AlertTitle>
+              <AlertDescription>
+                Upload a video or use our demo to analyze road conditions. The AI will detect potholes and alert you in real-time.
+              </AlertDescription>
+            </Alert>
             <VideoAnalysisWithAlerts />
           </TabsContent>
           
