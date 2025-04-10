@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Card, 
@@ -816,4 +817,177 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       >
                         <div className="flex justify-between items-center">
                           <div className="space-x-1">
-                            <Badge variant
+                            <Badge variant="outline" className={getSeverityTextColor(detection.severity)}>
+                              {detection.severity === 'high' ? 'Critical' : 
+                              detection.severity === 'medium' ? 'Moderate' : 'Minor'}
+                            </Badge>
+                            <Badge className={getSizeColor(detection.size)}>
+                              {detection.size} size
+                            </Badge>
+                          </div>
+                          <span className="text-xs font-mono">
+                            {formatTime(detection.timeInVideo)}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-xs flex justify-between">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            <span>{detection.locationName || `${detection.distance}m ahead`}</span>
+                          </div>
+                          <div>
+                            Confidence: {Math.round(detection.confidence * 100)}%
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              <div className="border rounded-md p-4 space-y-4">
+                <h3 className="font-medium">Detection Settings</h3>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Sensitivity Level</span>
+                    <span>{sensitivityLevel}%</span>
+                  </div>
+                  <Slider 
+                    value={[sensitivityLevel]} 
+                    onValueChange={(value) => setSensitivityLevel(value[0])}
+                    max={100}
+                    step={5}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Higher sensitivity may detect more potential potholes, but with more false positives.
+                  </p>
+                </div>
+                
+                <div className="space-y-2 mt-4">
+                  <div className="flex justify-between text-sm">
+                    <span>Detection Threshold</span>
+                    <span>{detectionThreshold}%</span>
+                  </div>
+                  <Slider 
+                    value={[detectionThreshold]} 
+                    onValueChange={(value) => setDetectionThreshold(value[0])}
+                    max={100}
+                    step={5}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Minimum confidence level required to register a pothole detection.
+                  </p>
+                </div>
+                
+                <div className="flex justify-between mt-4">
+                  <Button variant="outline" onClick={() => {
+                    setSensitivityLevel(75);
+                    setDetectionThreshold(65);
+                    toast.info("Reset to default settings");
+                  }}>
+                    Reset to defaults
+                  </Button>
+                  <Button onClick={() => {
+                    toast.success("Settings applied");
+                    // Would normally apply these settings to the detection algorithm
+                  }}>
+                    Apply Settings
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="analytics" className="space-y-4">
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-4">Processing Statistics</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">Frames Processed</div>
+                    <div className="text-2xl font-mono">{processingStats.framesProcessed}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">Processing Speed</div>
+                    <div className="text-2xl font-mono">{processingStats.framesPerSecond} FPS</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">Detection Accuracy</div>
+                    <div className="text-2xl font-mono">{processingStats.detectionAccuracy.toFixed(1)}%</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">Memory Usage</div>
+                    <div className="text-2xl font-mono">{processingStats.memoryUsage.toFixed(0)} MB</div>
+                  </div>
+                </div>
+                
+                <h3 className="font-medium mt-6 mb-3">Detection Summary</h3>
+                {detections.length > 0 ? (
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <div>Total detections:</div>
+                      <div className="font-medium">{detections.length}</div>
+                    </div>
+                    
+                    <div className="space-y-2 mt-4">
+                      <div className="flex justify-between text-xs">
+                        <span>By Severity</span>
+                        <span>{detections.filter(d => d.severity === 'high').length} critical, {detections.filter(d => d.severity === 'medium').length} moderate, {detections.filter(d => d.severity === 'low').length} minor</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full flex overflow-hidden">
+                        <div 
+                          className="bg-red-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.severity === 'high').length / detections.length) * 100}%`}}
+                        ></div>
+                        <div 
+                          className="bg-yellow-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.severity === 'medium').length / detections.length) * 100}%`}}
+                        ></div>
+                        <div 
+                          className="bg-green-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.severity === 'low').length / detections.length) * 100}%`}}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 mt-4">
+                      <div className="flex justify-between text-xs">
+                        <span>By Size</span>
+                        <span>{detections.filter(d => d.size === 'large').length} large, {detections.filter(d => d.size === 'medium').length} medium, {detections.filter(d => d.size === 'small').length} small</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full flex overflow-hidden">
+                        <div 
+                          className="bg-pink-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.size === 'large').length / detections.length) * 100}%`}}
+                        ></div>
+                        <div 
+                          className="bg-purple-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.size === 'medium').length / detections.length) * 100}%`}}
+                        ></div>
+                        <div 
+                          className="bg-blue-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.size === 'small').length / detections.length) * 100}%`}}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <Button variant="outline" className="w-full mt-4" onClick={() => toast.success("Report generated and downloaded")}>
+                      Generate Analysis Report
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Info className="h-8 w-8 mx-auto mb-2" />
+                    <p>Process a video to view detection analytics</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default VideoAnalysis;
