@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Card, 
@@ -42,6 +43,7 @@ type PotholeDetection = {
   severity: 'low' | 'medium' | 'high';
   location?: { lat: number; lng: number };
   distance?: number; // meters from current position
+  locationName?: string; // Added Indian location names
 };
 
 interface VideoAnalysisProps {
@@ -50,6 +52,20 @@ interface VideoAnalysisProps {
 }
 
 const DEMO_VIDEO_URL = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+
+// Indian city/location names for simulation
+const INDIAN_LOCATIONS = [
+  "Connaught Place, Delhi",
+  "MG Road, Bangalore",
+  "Marine Drive, Mumbai",
+  "Park Street, Kolkata",
+  "Lal Darwaza, Hyderabad",
+  "Anna Salai, Chennai",
+  "FC Road, Pune",
+  "Hazratganj, Lucknow",
+  "Mall Road, Shimla",
+  "MG Marg, Gangtok"
+];
 
 const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPotholeDetected }) => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -82,10 +98,11 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
   const processTimeoutRef = useRef<number | null>(null);
   
   useEffect(() => {
+    // Load the demo video by default
     if (!videoUrl && !videoFile) {
       setVideoUrl(DEMO_VIDEO_URL);
       toast.info("Using demo video for analysis", {
-        description: "Upload your own video for custom analysis"
+        description: "Upload your own video for custom road analysis"
       });
     }
   }, []);
@@ -166,19 +183,19 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
     
     processTimeoutRef.current = window.setTimeout(() => {
       toast.info("Initializing AI model for pothole detection", {
-        description: "Processing video frames with Python TensorFlow model...",
+        description: "Processing video frames with TensorFlow...",
         duration: 3000,
       });
       
       const interval = setInterval(() => {
         setProcessProgress(prev => {
-          const randomIncrement = Math.random() * 2 + 0.2;
+          const randomIncrement = Math.random() * 2 + 0.5; // Faster progress
           const newProgress = prev + randomIncrement;
           
           if (Math.floor(prev / 10) < Math.floor(newProgress / 10)) {
             setProcessingStats(prevStats => ({
               framesProcessed: prevStats.framesProcessed + Math.floor(Math.random() * 200) + 100,
-              framesPerSecond: Math.floor(Math.random() * 5) + 25,
+              framesPerSecond: Math.floor(Math.random() * 8) + 25,
               detectionAccuracy: Math.min(99, prevStats.detectionAccuracy + Math.random() * 2),
               memoryUsage: Math.min(1200, prevStats.memoryUsage + Math.random() * 50)
             }));
@@ -237,6 +254,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
       
       const severityIndex = Math.min(2, Math.floor(Math.random() * 3) + severityBias);
       const sizeIndex = Math.min(2, Math.floor(Math.random() * 3) + (severityIndex > 1 ? 1 : 0));
+      const locationIndex = Math.floor(Math.random() * INDIAN_LOCATIONS.length);
       
       mockDetections.push({
         timeInVideo,
@@ -244,10 +262,12 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
         size: sizes[sizeIndex],
         severity: severities[severityIndex],
         location: {
-          lat: 20.5937 + (Math.random() - 0.5) * 2,
-          lng: 78.9629 + (Math.random() - 0.5) * 2
+          // Indian approximate lat/lng coordinates
+          lat: 20.5937 + (Math.random() - 0.5) * 10,
+          lng: 78.9629 + (Math.random() - 0.5) * 10
         },
-        distance: Math.floor(Math.random() * 100) + 10
+        distance: Math.floor(Math.random() * 100) + 10,
+        locationName: INDIAN_LOCATIONS[locationIndex]
       });
     }
     
@@ -269,7 +289,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
       setIsSimulating(false);
     });
     
-    toast.info("Simulation started", {
+    toast.info("Road analysis simulation started", {
       description: "Watch for pothole alerts as they appear in the video",
     });
     
@@ -297,10 +317,14 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
               const severityText = severity === 'high' ? 'Critical' : 
                               severity === 'medium' ? 'Moderate' : 'Minor';
               
+              const locationText = detection.locationName ? 
+                `near ${detection.locationName}` : 
+                `${distance}m ahead`;
+              
               toast.warning(
                 `${severityText} Pothole Detected!`, 
                 {
-                  description: `${detection.size} size at ${formatTime(detection.timeInVideo)}, ${distance}m ahead`,
+                  description: `${detection.size} size at ${formatTime(detection.timeInVideo)}, ${locationText}`,
                   position: "top-center",
                   duration: 3000,
                   icon: <AlertCircle className={`h-5 w-5 ${
@@ -518,12 +542,14 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                 Confidence: {Math.round(selectedDetection.confidence * 100)}%
               </div>
               
-              {selectedDetection.distance && (
-                <div className="bg-black/70 text-white px-2 py-1 rounded flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  <span>Distance: {selectedDetection.distance}m</span>
-                </div>
-              )}
+              <div className="bg-black/70 text-white px-2 py-1 rounded flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                <span>
+                  {selectedDetection.locationName ? 
+                    selectedDetection.locationName : 
+                    `${selectedDetection.distance}m ahead`}
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -576,7 +602,9 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
               <span>At: <span className="font-medium">{formatTime(selectedDetection.timeInVideo)}</span></span>
             </div>
             <div className="text-sm mt-1">
-              <span>Distance: <span className="font-medium">{selectedDetection.distance || 'Unknown'}m</span></span>
+              <span>Location: <span className="font-medium">
+                {selectedDetection.locationName || `${selectedDetection.distance || 'Unknown'}m ahead`}
+              </span></span>
             </div>
           </AlertDescription>
         </Alert>
@@ -678,9 +706,9 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                         title={showAlerts ? "Disable alerts" : "Enable alerts"}
                       >
                         {showAlerts ? (
-                          <AlertCircle className="h-4 w-4" />
+                          <Bell className="h-4 w-4" />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                          <Bell className="h-4 w-4 text-muted-foreground" />
                         )}
                       </Button>
                     </div>
@@ -782,7 +810,9 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                         <div className="mt-1 text-xs text-muted-foreground flex items-center justify-between">
                           <div className="flex items-center">
                             <MapPin className="h-3 w-3 mr-1" />
-                            {detection.distance ? `${detection.distance}m ahead` : 'Distance unknown'}
+                            {detection.locationName ? 
+                              detection.locationName : 
+                              detection.distance ? `${detection.distance}m ahead` : 'Location unknown'}
                           </div>
                           {alertHistory.some(alert => alert.timeInVideo === detection.timeInVideo) && (
                             <span className="text-amber-600 flex items-center gap-1">
@@ -857,7 +887,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       <div className="text-sm font-medium">Model Accuracy</div>
                       <div className="text-2xl font-bold mt-1">{processingStats.detectionAccuracy.toFixed(1)}%</div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Based on training data
+                        Based on Indian road data
                       </div>
                     </div>
                     <div className="p-4 bg-muted/20 rounded-md">

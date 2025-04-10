@@ -18,6 +18,20 @@ interface DriverAlertsProps {
   alertSeverity?: AlertSeverity;
 }
 
+// Indian location names for alerts
+const INDIAN_LOCATIONS = [
+  "Connaught Place, Delhi",
+  "MG Road, Bangalore",
+  "Marine Drive, Mumbai",
+  "Park Street, Kolkata",
+  "Lal Darwaza, Hyderabad",
+  "Anna Salai, Chennai",
+  "FC Road, Pune",
+  "Hazratganj, Lucknow",
+  "Mall Road, Shimla",
+  "MG Marg, Gangtok"
+];
+
 const DriverAlerts: React.FC<DriverAlertsProps> = ({ 
   simulationActive, 
   currentAlert,
@@ -32,6 +46,7 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
     timestamp: Date;
     message: string;
     severity: AlertSeverity;
+    location?: string;
   }>>([]);
 
   useEffect(() => {
@@ -54,8 +69,9 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
             const severities: AlertSeverity[] = ['low', 'medium', 'high'];
             const randomSeverity = severities[Math.floor(Math.random() * severities.length)];
             const distance = Math.floor(Math.random() * 100) + 10;
+            const locationIndex = Math.floor(Math.random() * INDIAN_LOCATIONS.length);
             
-            handleAlert(createAlertMessage(randomSeverity, distance), randomSeverity);
+            handleAlert(createAlertMessage(randomSeverity, distance, INDIAN_LOCATIONS[locationIndex]), randomSeverity, INDIAN_LOCATIONS[locationIndex]);
           }
         }, 5000);
         
@@ -78,7 +94,8 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
   // Handle new alerts coming from props
   useEffect(() => {
     if (currentAlert && simulationActive) {
-      handleAlert(currentAlert, alertSeverity);
+      const locationIndex = Math.floor(Math.random() * INDIAN_LOCATIONS.length);
+      handleAlert(currentAlert, alertSeverity, INDIAN_LOCATIONS[locationIndex]);
     }
   }, [currentAlert, alertSeverity, simulationActive]);
   
@@ -91,20 +108,22 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
     }
   }, [alertDistance]);
   
-  const createAlertMessage = (severity: AlertSeverity, distance: number): string => {
+  const createAlertMessage = (severity: AlertSeverity, distance: number, location?: string): string => {
+    const locationText = location ? `near ${location}` : `${distance} meters ahead`;
+    
     switch(severity) {
       case 'high':
-        return `Warning! Critical pothole ahead at ${distance} meters. Reduce speed immediately.`;
+        return `Warning! Critical pothole ahead ${locationText}. Reduce speed immediately.`;
       case 'medium':
-        return `Caution! Pothole detected ${distance} meters ahead. Prepare to slow down.`;
+        return `Caution! Pothole detected ${locationText}. Prepare to slow down.`;
       case 'low':
-        return `Notice: Minor road damage ${distance} meters ahead.`;
+        return `Notice: Minor road damage ${locationText}.`;
       default:
-        return `Road anomaly detected at ${distance} meters.`;
+        return `Road anomaly detected ${locationText}.`;
     }
   };
   
-  const handleAlert = (message: string, severity: AlertSeverity) => {
+  const handleAlert = (message: string, severity: AlertSeverity, location?: string) => {
     setCurrentAlertText(message);
     
     // Add to history
@@ -112,7 +131,8 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
       {
         timestamp: new Date(),
         message,
-        severity
+        severity,
+        location
       },
       ...prev.slice(0, 9) // Keep last 10 alerts
     ]);
@@ -214,7 +234,7 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
           ) : (
             <div className="border rounded-md p-3 bg-muted/30">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Monitoring road conditions...</span>
+                <span className="text-muted-foreground">Monitoring Indian road conditions...</span>
                 <Check className="h-4 w-4 text-green-500" />
               </div>
               <Progress value={Math.random() * 20 + 10} className="h-1" />
@@ -274,6 +294,12 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
                 </span>
               </div>
               <p className="mt-1 break-words">{alert.message}</p>
+              {alert.location && (
+                <div className="mt-1 flex items-center gap-1 text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  <span>{alert.location}</span>
+                </div>
+              )}
             </div>
           )) : (
             <div className="text-xs text-center py-2 text-muted-foreground">

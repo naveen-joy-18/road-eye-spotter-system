@@ -15,6 +15,20 @@ interface MapInfoPanelProps {
   };
 }
 
+// Updated to use Indian cities
+const INDIAN_CITIES = [
+  { name: "Delhi", count: 57 },
+  { name: "Mumbai", count: 48 },
+  { name: "Bangalore", count: 35 },
+  { name: "Chennai", count: 29 },
+  { name: "Kolkata", count: 31 },
+  { name: "Hyderabad", count: 26 },
+  { name: "Pune", count: 22 },
+  { name: "Ahmedabad", count: 19 },
+  { name: "Jaipur", count: 15 },
+  { name: "Lucknow", count: 13 }
+];
+
 export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) => {
   // Calculate percentages for visual representation
   const totalCount = roadDamageStats.total || 1; // Avoid division by zero
@@ -24,6 +38,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
   
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [topCities, setTopCities] = useState(INDIAN_CITIES.slice(0, 5));
   
   // Determine the trend icon based on which category has the highest count
   const getTrendIcon = () => {
@@ -44,12 +59,18 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
     setTimeout(() => {
       setIsRefreshing(false);
       setLastUpdated(new Date());
+      // Shuffle the cities to simulate updated data
+      setTopCities([...INDIAN_CITIES]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 5)
+        .sort((a, b) => b.count - a.count)
+      );
       toast.success("Road damage data refreshed");
     }, 1200);
   };
 
   return (
-    <div className="absolute top-16 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-md shadow-md w-60 border border-gray-200 animate-fade-in">
+    <div className="absolute top-16 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-md shadow-md w-72 border border-gray-200 animate-fade-in">
       <div className="flex justify-between items-center">
         <h4 className="font-semibold text-sm mb-2">Road Damage Report</h4>
         <div className="flex items-center gap-1 text-xs bg-gray-100 rounded-full px-2 py-0.5">
@@ -67,7 +88,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
             </span>
             <Badge variant="destructive" className="text-xs">{roadDamageStats.critical}</Badge>
           </div>
-          <Progress value={criticalPercent} className="h-1.5 bg-red-100" indicatorClassName="bg-severity-high" />
+          <Progress value={criticalPercent} className="h-1.5 bg-red-100" />
         </div>
         
         <div>
@@ -78,7 +99,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
             </span>
             <Badge variant="secondary" className="text-xs bg-yellow-500 hover:bg-yellow-600">{roadDamageStats.moderate}</Badge>
           </div>
-          <Progress value={moderatePercent} className="h-1.5 bg-yellow-100" indicatorClassName="bg-severity-medium" />
+          <Progress value={moderatePercent} className="h-1.5 bg-yellow-100" />
         </div>
         
         <div>
@@ -89,7 +110,23 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
             </span>
             <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">{roadDamageStats.minor}</Badge>
           </div>
-          <Progress value={minorPercent} className="h-1.5 bg-green-100" indicatorClassName="bg-severity-low" />
+          <Progress value={minorPercent} className="h-1.5 bg-green-100" />
+        </div>
+      </div>
+      
+      {/* Added section for top cities reporting */}
+      <div className="mt-4 border-t border-gray-200 pt-3">
+        <h5 className="text-xs font-semibold mb-2 flex items-center gap-1">
+          <BarChart3 className="h-3 w-3" />
+          Top Cities Reporting
+        </h5>
+        <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+          {topCities.map((city, index) => (
+            <div key={index} className="flex justify-between items-center text-xs">
+              <span>{city.name}</span>
+              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{city.count}</span>
+            </div>
+          ))}
         </div>
       </div>
       
