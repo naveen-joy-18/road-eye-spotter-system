@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Card, 
@@ -139,6 +138,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
   const handleVideoLoad = () => {
     setIsVideoLoaded(true);
     if (!detections.length && !isProcessing) {
+      // Automatically start processing when video is loaded
       simulateProcessing();
     }
   };
@@ -170,6 +170,11 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
       toast.success("Video uploaded successfully", {
         description: `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`
       });
+      
+      // Automatically start processing once file is uploaded
+      setTimeout(() => {
+        simulateProcessing();
+      }, 1000);
     }
   };
 
@@ -181,42 +186,39 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
     setSelectedDetection(null);
     setAlertHistory([]);
     
-    processTimeoutRef.current = window.setTimeout(() => {
-      toast.info("Initializing AI model for pothole detection", {
-        description: "Processing video frames with TensorFlow...",
-        duration: 3000,
+    toast.info("Starting video analysis...", {
+      description: "Processing with AI models to detect potholes",
+    });
+    
+    const interval = setInterval(() => {
+      setProcessProgress(prev => {
+        const randomIncrement = Math.random() * 2 + 0.5; // Faster progress
+        const newProgress = prev + randomIncrement;
+        
+        if (Math.floor(prev / 10) < Math.floor(newProgress / 10)) {
+          setProcessingStats(prevStats => ({
+            framesProcessed: prevStats.framesProcessed + Math.floor(Math.random() * 200) + 100,
+            framesPerSecond: Math.floor(Math.random() * 8) + 25,
+            detectionAccuracy: Math.min(99, prevStats.detectionAccuracy + Math.random() * 2),
+            memoryUsage: Math.min(1200, prevStats.memoryUsage + Math.random() * 50)
+          }));
+        }
+        
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setIsProcessing(false);
+          setProcessProgress(100);
+          generateMockDetections();
+          simulateProcessingStats();
+          toast.success("Video analysis complete!", {
+            description: "Found multiple potholes in the video. Ready for simulation.",
+            icon: <AlertCircle className="text-green-500" />
+          });
+          return 100;
+        }
+        return newProgress;
       });
-      
-      const interval = setInterval(() => {
-        setProcessProgress(prev => {
-          const randomIncrement = Math.random() * 2 + 0.5; // Faster progress
-          const newProgress = prev + randomIncrement;
-          
-          if (Math.floor(prev / 10) < Math.floor(newProgress / 10)) {
-            setProcessingStats(prevStats => ({
-              framesProcessed: prevStats.framesProcessed + Math.floor(Math.random() * 200) + 100,
-              framesPerSecond: Math.floor(Math.random() * 8) + 25,
-              detectionAccuracy: Math.min(99, prevStats.detectionAccuracy + Math.random() * 2),
-              memoryUsage: Math.min(1200, prevStats.memoryUsage + Math.random() * 50)
-            }));
-          }
-          
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setIsProcessing(false);
-            setProcessProgress(100);
-            generateMockDetections();
-            simulateProcessingStats();
-            toast.success("Video analysis complete!", {
-              description: "Found multiple potholes in the video. Ready for simulation.",
-              icon: <AlertCircle className="text-green-500" />
-            });
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 200);
-    }, 1000);
+    }, 200);
   };
 
   const simulateProcessingStats = () => {
@@ -273,6 +275,11 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
     
     mockDetections.sort((a, b) => a.timeInVideo - b.timeInVideo);
     setDetections(mockDetections);
+    
+    // Automatically start simulation after processing
+    setTimeout(() => {
+      startSimulation();
+    }, 1500);
   };
 
   const startSimulation = () => {
@@ -662,6 +669,20 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       <Upload className="h-4 w-4 mr-2" />
                       Select video
                     </Button>
+                    <Button 
+                      className="mt-4 ml-2" 
+                      onClick={() => {
+                        setVideoUrl(DEMO_VIDEO_URL);
+                        setIsVideoLoaded(false);
+                        setTimeout(() => {
+                          setIsVideoLoaded(true);
+                          simulateProcessing();
+                        }, 500);
+                      }}
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Use demo video
+                    </Button>
                   </>
                 ) : (
                   <div className="space-y-4">
@@ -681,6 +702,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       
                       {!isProcessing && detections.length === 0 && (
                         <Button onClick={simulateProcessing}>
+                          <Play className="h-4 w-4 mr-2" />
                           Process video
                         </Button>
                       )}
@@ -793,126 +815,4 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       >
                         <div className="flex justify-between items-center">
                           <div className="space-x-1">
-                            <Badge variant="outline" className="text-xs">
-                              {formatTime(detection.timeInVideo)}
-                            </Badge>
-                            <Badge className={`text-xs ${getSeverityColor(detection.severity)} text-white`}>
-                              {detection.severity} severity
-                            </Badge>
-                            <Badge className={`text-xs ${getSizeColor(detection.size)} text-white`}>
-                              {detection.size} size
-                            </Badge>
-                          </div>
-                          <div className="text-xs font-medium">
-                            {Math.round(detection.confidence * 100)}% confident
-                          </div>
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground flex items-center justify-between">
-                          <div className="flex items-center">
-                            <MapPin className="h-3 w-3 mr-1" />
-                            {detection.locationName ? 
-                              detection.locationName : 
-                              detection.distance ? `${detection.distance}m ahead` : 'Location unknown'}
-                          </div>
-                          {alertHistory.some(alert => alert.timeInVideo === detection.timeInVideo) && (
-                            <span className="text-amber-600 flex items-center gap-1">
-                              <Bell className="h-3 w-3" />
-                              Alert triggered
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="settings">
-              <div className="space-y-6 p-4 border border-border rounded-md">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-medium">Detection Settings</h3>
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium">Detection Sensitivity</label>
-                        <span className="text-xs text-muted-foreground">{sensitivityLevel}%</span>
-                      </div>
-                      <Slider 
-                        value={[sensitivityLevel]} 
-                        min={0} 
-                        max={100} 
-                        step={1}
-                        onValueChange={(v) => setSensitivityLevel(v[0])}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Higher sensitivity detects more potholes but may increase false positives
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium">Confidence Threshold</label>
-                        <span className="text-xs text-muted-foreground">{detectionThreshold}%</span>
-                      </div>
-                      <Slider 
-                        value={[detectionThreshold]} 
-                        min={0} 
-                        max={100} 
-                        step={1}
-                        onValueChange={(v) => setDetectionThreshold(v[0])}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Only show detections with confidence above this threshold
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="analytics">
-              <div className="space-y-6 p-4 border border-border rounded-md">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Processing Analytics</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-muted/20 rounded-md">
-                      <div className="text-sm font-medium">Processing Speed</div>
-                      <div className="text-2xl font-bold mt-1">{processingStats.framesPerSecond} FPS</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Frames processed per second
-                      </div>
-                    </div>
-                    <div className="p-4 bg-muted/20 rounded-md">
-                      <div className="text-sm font-medium">Model Accuracy</div>
-                      <div className="text-2xl font-bold mt-1">{processingStats.detectionAccuracy.toFixed(1)}%</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Based on Indian road data
-                      </div>
-                    </div>
-                    <div className="p-4 bg-muted/20 rounded-md">
-                      <div className="text-sm font-medium">Memory Usage</div>
-                      <div className="text-2xl font-bold mt-1">{processingStats.memoryUsage.toFixed(0)} MB</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        RAM used by ML model
-                      </div>
-                    </div>
-                    <div className="p-4 bg-muted/20 rounded-md">
-                      <div className="text-sm font-medium">Processed Frames</div>
-                      <div className="text-2xl font-bold mt-1">{processingStats.framesProcessed}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Total frames analyzed
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-export default VideoAnalysis;
+                            <Badge variant
