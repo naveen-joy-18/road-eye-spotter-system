@@ -6,11 +6,13 @@ import DataManagement from '@/components/alerts/DataManagement';
 import PythonTerminal from '@/components/PythonTerminal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, Bell, Terminal } from 'lucide-react';
+import { Database, Bell, Terminal, Bot, MessageCircle } from 'lucide-react';
 import { speakAlertWithSeverity, AlertSeverity, cancelSpeech } from '@/utils/voiceAlert';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PotholeDetection } from '@/utils/simulatedPythonBackend';
+import { Button } from '@/components/ui/button';
+import PotholeChatBot from './PotholeChatBot';
 
 const VideoAnalysisWithAlerts: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
@@ -118,7 +120,7 @@ const VideoAnalysisWithAlerts: React.FC = () => {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-3">
+                <TabsList className="grid grid-cols-4">
                   <TabsTrigger value="alerts" className="flex items-center">
                     <Bell className="h-4 w-4 mr-2" />
                     Driver Alerts
@@ -130,6 +132,10 @@ const VideoAnalysisWithAlerts: React.FC = () => {
                   <TabsTrigger value="python" className="flex items-center">
                     <Terminal className="h-4 w-4 mr-2" />
                     Python
+                  </TabsTrigger>
+                  <TabsTrigger value="chat" className="flex items-center">
+                    <Bot className="h-4 w-4 mr-2" />
+                    Chat
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -148,6 +154,11 @@ const VideoAnalysisWithAlerts: React.FC = () => {
             </TabsContent>
             <TabsContent value="python" className="mt-0">
               <PythonTerminal active={isSimulating} frameCount={frameCount} />
+            </TabsContent>
+            <TabsContent value="chat" className="mt-0">
+              <div className="h-[400px]">
+                <PotholeChatBot />
+              </div>
             </TabsContent>
           </CardContent>
         </Card>

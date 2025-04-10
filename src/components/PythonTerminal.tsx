@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { generatePythonTerminalOutput } from '@/utils/simulatedPythonBackend';
+import { executePythonCommand } from '@/services/cerebrasAI';
 
 interface PythonTerminalProps {
   active: boolean;
@@ -9,24 +9,37 @@ interface PythonTerminalProps {
 
 const PythonTerminal: React.FC<PythonTerminalProps> = ({ active, frameCount, className }) => {
   const [terminalLines, setTerminalLines] = useState<string[]>([
-    "[INFO] Initializing TensorFlow environment",
+    "[INFO] Initializing environment for pothole detection",
     "[INFO] Loading YOLOv5 model weights from ./models/pothole_detection_v3.pt",
     "[INFO] GPU acceleration enabled: CUDA 11.7 detected"
   ]);
+  const [command, setCommand] = useState<string>("python3 pothole_detection.py --video input.mp4 --model yolov5");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const terminalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Add new logs periodically when active
   useEffect(() => {
     if (!active) return;
     
-    const interval = setInterval(() => {
-      const newLines = generatePythonTerminalOutput(frameCount);
-      setTerminalLines(prev => {
-        const updatedLines = [...prev, ...newLines];
-        // Keep the terminal at a reasonable size
-        return updatedLines.slice(Math.max(0, updatedLines.length - 50));
-      });
-    }, 800);
+    const interval = setInterval(async () => {
+      setIsProcessing(true);
+      try {
+        // Generate output using Cerebras AI for current frame
+        const pythonCommand = `print_detection_status(${frameCount})`;
+        const newLines = await executePythonCommand(pythonCommand);
+        
+        setTerminalLines(prev => {
+          const updatedLines = [...prev, ...newLines];
+          // Keep the terminal at a reasonable size
+          return updatedLines.slice(Math.max(0, updatedLines.length - 50));
+        });
+      } catch (error) {
+        console.error("Error getting Python output:", error);
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 2000);
     
     return () => clearInterval(interval);
   }, [active, frameCount]);
@@ -38,10 +51,34 @@ const PythonTerminal: React.FC<PythonTerminalProps> = ({ active, frameCount, cla
     }
   }, [terminalLines]);
 
+  const handleCommandSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!command.trim() || isProcessing) return;
+    
+    // Add user command to terminal
+    setTerminalLines(prev => [...prev, `$ ${command}`]);
+    setIsProcessing(true);
+    
+    try {
+      // Execute command using Cerebras AI
+      const output = await executePythonCommand(command);
+      
+      setTerminalLines(prev => [...prev, ...output]);
+      setCommand("");
+    } catch (error) {
+      setTerminalLines(prev => [...prev, "Error: Failed to execute command"]);
+    } finally {
+      setIsProcessing(false);
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
+  };
+
   return (
     <div className={`bg-black text-green-500 font-mono text-xs p-3 rounded-md ${className || ''}`}>
       <div className="flex justify-between items-center mb-2 border-b border-green-900 pb-1">
-        <div>python3 pothole_detection.py --video input.mp4 --model yolov5</div>
+        <div>{command}</div>
         <div className="flex gap-2">
           <div className={`h-2 w-2 rounded-full ${active ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
           <div className="text-xs text-green-700">{active ? 'RUNNING' : 'STOPPED'}</div>
@@ -56,8 +93,21 @@ const PythonTerminal: React.FC<PythonTerminalProps> = ({ active, frameCount, cla
             {line}
           </div>
         ))}
-        {active && <div className="inline-block h-4 w-2 bg-green-500 animate-pulse ml-1"></div>}
+        {isProcessing && <div className="inline-block h-4 w-2 bg-green-500 animate-pulse ml-1"></div>}
       </div>
+      
+      <form onSubmit={handleCommandSubmit} className="mt-2 flex border-t border-green-900 pt-2">
+        <span className="text-green-700 mr-1">$</span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          className="flex-1 bg-transparent border-none outline-none text-green-500"
+          placeholder="Enter Python command..."
+          disabled={isProcessing}
+        />
+      </form>
     </div>
   );
 };

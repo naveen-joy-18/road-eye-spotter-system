@@ -1,25 +1,23 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import VideoAnalysisWithAlerts from '@/components/VideoAnalysisWithAlerts';
 import Map from '@/components/Map';
 import ReportForm from '@/components/ReportForm';
+import PotholeChatBot from '@/components/PotholeChatBot';
 import { toast, Toaster } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Bot, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const VideoAnalysisPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('video');
 
-  // Ensure the layout knows this is the video tab
   useEffect(() => {
     document.title = "ROADSENSE AI - Video Analysis";
   }, []);
 
   useEffect(() => {
-    // Ensure video analysis is properly initialized when page loads
     if (activeTab === 'video') {
       toast.info("Video Analysis Module Loaded", {
         description: "Upload a video or use our demo to analyze road conditions with our AI backend"
@@ -48,18 +46,21 @@ const VideoAnalysisPage: React.FC = () => {
     }
   };
 
-  // Use a temporary API key for demonstration (in a real app, this would come from environment variables)
   const dummyApiKey = "demo-map-api-key";
 
   return (
     <Layout activeTab="video" onTabChange={(tab) => setActiveTab(tab)}>
       <div className="container mx-auto py-6">
         <Tabs defaultValue="video" value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="video">Video Analysis</TabsTrigger>
             <TabsTrigger value="map">Map</TabsTrigger>
             <TabsTrigger value="report">Report</TabsTrigger>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="chat" className="flex items-center gap-1">
+              <MessageCircle className="h-4 w-4" />
+              AI Chat
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="video" className="mt-4 animate-in fade-in-50">
@@ -76,9 +77,9 @@ const VideoAnalysisPage: React.FC = () => {
             </div>
             <Alert className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Python-Powered Pothole Detection</AlertTitle>
+              <AlertTitle>AI-Powered Pothole Detection</AlertTitle>
               <AlertDescription>
-                Our AI detection system uses TensorFlow and advanced computer vision to analyze road videos 
+                Our advanced AI detection system uses Cerebras AI and computer vision to analyze road videos 
                 and detect potholes with high precision. Upload a video or use our demo to see it in action.
               </AlertDescription>
             </Alert>
@@ -197,6 +198,46 @@ const VideoAnalysisPage: React.FC = () => {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="chat" className="mt-4 animate-in fade-in-50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-2">
+                <PotholeChatBot />
+              </div>
+              <div className="md:col-span-1">
+                <div className="bg-white p-6 rounded-lg border border-border h-full">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-primary" />
+                    About AI Pothole Chat
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <p>
+                      Our AI assistant is powered by Cerebras AI and specialized in all things related to potholes 
+                      and road damage. Feel free to ask questions about:
+                    </p>
+                    
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Causes and formation of potholes</li>
+                      <li>Detection technologies and methods</li>
+                      <li>Prevention and repair techniques</li>
+                      <li>Impact on vehicles and traffic safety</li>
+                      <li>Government policies and reporting systems</li>
+                    </ul>
+                    
+                    <Alert className="mt-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Integrated AI System</AlertTitle>
+                      <AlertDescription>
+                        This chatbot uses the same AI technology that powers our pothole detection system,
+                        providing you with accurate and technical insights about road damage.
+                      </AlertDescription>
+                    </Alert>
                   </div>
                 </div>
               </div>
