@@ -3,11 +3,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import VideoAnalysis from '@/components/VideoAnalysis';
 import DriverAlerts from '@/components/alerts/DriverAlerts';
 import DataManagement from '@/components/alerts/DataManagement';
+import PythonTerminal from '@/components/PythonTerminal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, Bell } from 'lucide-react';
-import { speakAlertWithSeverity, AlertSeverity } from '@/utils/voiceAlert';
+import { Database, Bell, Terminal } from 'lucide-react';
+import { speakAlertWithSeverity, AlertSeverity, cancelSpeech } from '@/utils/voiceAlert';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { PotholeDetection } from '@/utils/simulatedPythonBackend';
 
 const VideoAnalysisWithAlerts: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
@@ -16,6 +19,7 @@ const VideoAnalysisWithAlerts: React.FC = () => {
     message: string;
     severity: AlertSeverity;
   } | null>(null);
+  const [frameCount, setFrameCount] = useState(0);
   const alertTimerRef = useRef<number | null>(null);
 
   const handleSimulationChange = (simulating: boolean) => {
@@ -38,26 +42,31 @@ const VideoAnalysisWithAlerts: React.FC = () => {
     }
   };
   
+  const handleFrameUpdate = (count: number) => {
+    setFrameCount(count);
+  };
+  
   // Handle incoming alerts from video analysis
-  const handleDetection = (severity: AlertSeverity, distance: number) => {
+  const handleDetection = (detection: PotholeDetection) => {
     if (!isSimulating) return;
     
+    const distance = detection.distance || 50;
     let message = "";
     
-    switch(severity) {
+    switch(detection.severity) {
       case 'high':
-        message = `Warning! Critical pothole ahead at ${distance} meters. Reduce speed immediately.`;
+        message = `Warning! Critical pothole ahead at ${distance} meters. ${detection.depthEstimate}cm deep, ${detection.surfaceDamageEstimate}% surface damage. Detected using ${detection.detectionAlgorithm}.`;
         break;
       case 'medium':
-        message = `Caution! Pothole detected ${distance} meters ahead. Prepare to slow down.`;
+        message = `Caution! Pothole detected ${distance} meters ahead. Approximately ${detection.depthEstimate}cm deep. Detected by ${detection.detectionAlgorithm} algorithm.`;
         break;
       case 'low':
-        message = `Notice: Minor road damage ${distance} meters ahead.`;
+        message = `Notice: Minor road damage ${distance} meters ahead. Surface damage estimated at ${detection.surfaceDamageEstimate}%. ${detection.detectionAlgorithm} confidence: ${Math.round(detection.confidence * 100)}%.`;
         break;
     }
     
-    setCurrentAlert({ message, severity });
-    speakAlertWithSeverity(message, severity);
+    setCurrentAlert({ message, severity: detection.severity });
+    speakAlertWithSeverity(message, detection.severity);
   };
   
   // Process alerts when they change
@@ -101,6 +110,7 @@ const VideoAnalysisWithAlerts: React.FC = () => {
         <VideoAnalysis 
           onSimulationChange={handleSimulationChange} 
           onPotholeDetected={handleDetection}
+          onFrameUpdate={handleFrameUpdate}
         />
       </div>
       <div className="lg:col-span-1">
@@ -108,7 +118,7 @@ const VideoAnalysisWithAlerts: React.FC = () => {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-2">
+                <TabsList className="grid grid-cols-3">
                   <TabsTrigger value="alerts" className="flex items-center">
                     <Bell className="h-4 w-4 mr-2" />
                     Driver Alerts
@@ -116,6 +126,10 @@ const VideoAnalysisWithAlerts: React.FC = () => {
                   <TabsTrigger value="data" className="flex items-center">
                     <Database className="h-4 w-4 mr-2" />
                     Data Management
+                  </TabsTrigger>
+                  <TabsTrigger value="python" className="flex items-center">
+                    <Terminal className="h-4 w-4 mr-2" />
+                    Python
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -131,6 +145,9 @@ const VideoAnalysisWithAlerts: React.FC = () => {
             </TabsContent>
             <TabsContent value="data" className="mt-0">
               <DataManagement simulationActive={isSimulating} />
+            </TabsContent>
+            <TabsContent value="python" className="mt-0">
+              <PythonTerminal active={isSimulating} frameCount={frameCount} />
             </TabsContent>
           </CardContent>
         </Card>

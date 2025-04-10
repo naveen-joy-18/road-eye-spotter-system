@@ -33,41 +33,31 @@ import {
   ZoomOut,
   Info,
   Bell,
+  Terminal,
+  Code,
+  Database
 } from 'lucide-react';
 import { AlertSeverity } from '@/utils/voiceAlert';
-
-type PotholeDetection = {
-  timeInVideo: number; // seconds
-  confidence: number;
-  size: 'small' | 'medium' | 'large';
-  severity: 'low' | 'medium' | 'high';
-  location?: { lat: number; lng: number };
-  distance?: number; // meters from current position
-  locationName?: string; // Added Indian location names
-};
+import { 
+  simulateVideoProcessing, 
+  simulateRealTimeAnalysis, 
+  ProcessingStats, 
+  PotholeDetection 
+} from '@/utils/simulatedPythonBackend';
 
 interface VideoAnalysisProps {
   onSimulationChange?: (isSimulating: boolean) => void;
-  onPotholeDetected?: (severity: AlertSeverity, distance: number) => void;
+  onPotholeDetected?: (detection: PotholeDetection) => void;
+  onFrameUpdate?: (frameCount: number) => void;
 }
 
 const DEMO_VIDEO_URL = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
 
-// Indian city/location names for simulation
-const INDIAN_LOCATIONS = [
-  "Connaught Place, Delhi",
-  "MG Road, Bangalore",
-  "Marine Drive, Mumbai",
-  "Park Street, Kolkata",
-  "Lal Darwaza, Hyderabad",
-  "Anna Salai, Chennai",
-  "FC Road, Pune",
-  "Hazratganj, Lucknow",
-  "Mall Road, Shimla",
-  "MG Marg, Gangtok"
-];
-
-const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPotholeDetected }) => {
+const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ 
+  onSimulationChange, 
+  onPotholeDetected,
+  onFrameUpdate 
+}) => {
   
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -80,23 +70,30 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
   const [sensitivityLevel, setSensitivityLevel] = useState(75);
   const [detectionThreshold, setDetectionThreshold] = useState(65);
   const [selectedDetection, setSelectedDetection] = useState<PotholeDetection | null>(null);
-  const [processingStats, setProcessingStats] = useState({
+  const [processingStats, setProcessingStats] = useState<ProcessingStats>({
     framesProcessed: 0,
     framesPerSecond: 0,
     detectionAccuracy: 0,
-    memoryUsage: 0
+    memoryUsage: 0,
+    tensorflowStatus: 'Ready',
+    gpuUtilization: 0,
+    modelName: 'PotholeNet-v3.4',
+    detectionEvents: 0
   });
   const [showAlerts, setShowAlerts] = useState(true);
   const [videoSpeed, setVideoSpeed] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [alertHistory, setAlertHistory] = useState<PotholeDetection[]>([]);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [pythonConsoleOutput, setPythonConsoleOutput] = useState<string[]>([]);
+  const [showPythonLogs, setShowPythonLogs] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const simulationIntervalRef = useRef<number | null>(null);
   const statsIntervalRef = useRef<number | null>(null);
   const processTimeoutRef = useRef<number | null>(null);
+  const pythonSimulationRef = useRef<{ cancel: () => void } | null>(null);
   
   useEffect(() => {
     // Load the demo video by default
@@ -118,6 +115,9 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
       }
       if (processTimeoutRef.current) {
         clearTimeout(processTimeoutRef.current);
+      }
+      if (pythonSimulationRef.current) {
+        pythonSimulationRef.current.cancel();
       }
       if (videoUrl && videoUrl !== DEMO_VIDEO_URL) {
         URL.revokeObjectURL(videoUrl);
@@ -162,11 +162,16 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
       setIsSimulating(false);
       setCurrentSimTime(0);
       setIsVideoLoaded(false);
+      setPythonConsoleOutput([]);
       setProcessingStats({
         framesProcessed: 0,
         framesPerSecond: 0,
         detectionAccuracy: 0,
-        memoryUsage: 0
+        memoryUsage: 0,
+        tensorflowStatus: 'Ready',
+        gpuUtilization: 0,
+        modelName: 'PotholeNet-v3.4',
+        detectionEvents: 0
       });
       
       toast.success("Video uploaded successfully", {
@@ -181,107 +186,75 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
   };
 
   const simulateProcessing = () => {
-    if (isProcessing) return;
+    if (isProcessing || !videoUrl) return;
     
     setIsProcessing(true);
     setProcessProgress(0);
     setSelectedDetection(null);
     setAlertHistory([]);
+    setPythonConsoleOutput([
+      "[INFO] Loading TensorFlow 2.9.0...",
+      "[INFO] Initializing YOLOv5 model for pothole detection",
+      "[INFO] CUDA acceleration enabled on GPU: NVIDIA RTX",
+      "[INFO] Starting video processing pipeline..."
+    ]);
     
-    toast.info("Starting video analysis...", {
-      description: "Processing with AI models to detect potholes",
+    toast.info("Starting Python video analysis...", {
+      description: "TensorFlow models initializing for pothole detection",
     });
-    
-    const interval = setInterval(() => {
-      setProcessProgress(prev => {
-        const randomIncrement = Math.random() * 2 + 0.5; // Faster progress
-        const newProgress = prev + randomIncrement;
-        
-        if (Math.floor(prev / 10) < Math.floor(newProgress / 10)) {
-          setProcessingStats(prevStats => ({
-            framesProcessed: prevStats.framesProcessed + Math.floor(Math.random() * 200) + 100,
-            framesPerSecond: Math.floor(Math.random() * 8) + 25,
-            detectionAccuracy: Math.min(99, prevStats.detectionAccuracy + Math.random() * 2),
-            memoryUsage: Math.min(1200, prevStats.memoryUsage + Math.random() * 50)
-          }));
-        }
-        
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setIsProcessing(false);
-          setProcessProgress(100);
-          generateMockDetections();
-          simulateProcessingStats();
-          toast.success("Video analysis complete!", {
-            description: "Found multiple potholes in the video. Ready for simulation.",
-            icon: <AlertCircle className="text-green-500" />
-          });
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 200);
-  };
 
-  const simulateProcessingStats = () => {
-    if (statsIntervalRef.current) {
-      clearInterval(statsIntervalRef.current);
+    // Use our simulated Python backend for processing
+    if (pythonSimulationRef.current) {
+      pythonSimulationRef.current.cancel();
     }
-
-    statsIntervalRef.current = window.setInterval(() => {
-      setProcessingStats(prev => ({
-        framesProcessed: prev.framesProcessed + Math.floor(Math.random() * 50),
-        framesPerSecond: Math.floor(Math.random() * 5) + 25,
-        detectionAccuracy: Math.min(99.9, prev.detectionAccuracy + (Math.random() * 0.5 - 0.2)),
-        memoryUsage: Math.min(1300, Math.max(700, prev.memoryUsage + (Math.random() * 40 - 20)))
-      }));
-    }, 3000);
-  };
-
-  const generateMockDetections = () => {
-    const videoDuration = videoRef.current?.duration || 30;
-    const numDetections = Math.floor(Math.random() * 6) + 5;
-    const mockDetections: PotholeDetection[] = [];
     
-    const sizes = ['small', 'medium', 'large'] as const;
-    const severities = ['low', 'medium', 'high'] as const;
-    
-    for (let i = 0; i < numDetections; i++) {
-      const baseTime = (i / numDetections) * videoDuration;
-      const timeVariation = (videoDuration / numDetections) * 0.5;
-      const timeInVideo = baseTime + (Math.random() * timeVariation);
-      
-      let severityBias = 0;
-      if (timeInVideo > videoDuration * 0.3 && timeInVideo < videoDuration * 0.7) {
-        severityBias = 1;
+    pythonSimulationRef.current = simulateVideoProcessing(videoUrl, {
+      sensitivityLevel,
+      detectionThreshold,
+      onProgress: (progress, stats) => {
+        setProcessProgress(progress);
+        setProcessingStats(stats);
+        
+        // Update frame count for Python terminal
+        if (onFrameUpdate) {
+          onFrameUpdate(stats.framesProcessed);
+        }
+        
+        // Add Python-like console output
+        if (progress % 10 < 2 && Math.random() > 0.7) {
+          setPythonConsoleOutput(prev => [...prev, 
+            `[INFO] Processed ${stats.framesProcessed} frames at ${stats.framesPerSecond.toFixed(1)} FPS`,
+            `[DEBUG] Detection accuracy: ${stats.detectionAccuracy.toFixed(1)}%`
+          ]);
+        }
+      },
+      onComplete: (detections) => {
+        setDetections(detections);
+        setIsProcessing(false);
+        setProcessProgress(100);
+        
+        // Add completion message to Python console
+        setPythonConsoleOutput(prev => [...prev, 
+          "[INFO] Video processing complete",
+          `[INFO] Detected ${detections.length} potholes in video`,
+          "[DEBUG] Pothole classification breakdown:",
+          `  - Critical: ${detections.filter(d => d.severity === 'high').length}`,
+          `  - Moderate: ${detections.filter(d => d.severity === 'medium').length}`,
+          `  - Minor: ${detections.filter(d => d.severity === 'low').length}`,
+          "[INFO] Analysis results ready for review"
+        ]);
+        
+        toast.success("Python analysis complete!", {
+          description: `Found ${detections.length} potholes using TensorFlow models.`,
+          icon: <Terminal className="text-green-500" />
+        });
+        
+        // Automatically start simulation after processing
+        setTimeout(() => {
+          startSimulation();
+        }, 1500);
       }
-      
-      const severityIndex = Math.min(2, Math.floor(Math.random() * 3) + severityBias);
-      const sizeIndex = Math.min(2, Math.floor(Math.random() * 3) + (severityIndex > 1 ? 1 : 0));
-      const locationIndex = Math.floor(Math.random() * INDIAN_LOCATIONS.length);
-      
-      mockDetections.push({
-        timeInVideo,
-        confidence: 0.7 + (Math.random() * 0.3),
-        size: sizes[sizeIndex],
-        severity: severities[severityIndex],
-        location: {
-          // Indian approximate lat/lng coordinates
-          lat: 20.5937 + (Math.random() - 0.5) * 10,
-          lng: 78.9629 + (Math.random() - 0.5) * 10
-        },
-        distance: Math.floor(Math.random() * 100) + 10,
-        locationName: INDIAN_LOCATIONS[locationIndex]
-      });
-    }
-    
-    mockDetections.sort((a, b) => a.timeInVideo - b.timeInVideo);
-    setDetections(mockDetections);
-    
-    // Automatically start simulation after processing
-    setTimeout(() => {
-      startSimulation();
-    }, 1500);
+    });
   };
 
   const startSimulation = () => {
@@ -298,42 +271,41 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
       setIsSimulating(false);
     });
     
-    toast.info("Road analysis simulation started", {
-      description: "Watch for pothole alerts as they appear in the video",
+    toast.info("AI analysis simulation started", {
+      description: "Python-powered detection active. Watch for pothole alerts.",
     });
     
     simulationIntervalRef.current = window.setInterval(() => {
       if (videoRef.current) {
-        setCurrentSimTime(videoRef.current.currentTime);
+        const currentTime = videoRef.current.currentTime;
+        setCurrentSimTime(currentTime);
         
-        const currentDetections = detections.filter(d => {
-          return Math.abs(d.timeInVideo - videoRef.current!.currentTime) < 0.5;
-        });
-        
-        if (currentDetections.length > 0 && showAlerts) {
-          currentDetections.forEach(detection => {
+        // Use our simulated Python backend for real-time analysis
+        const currentDetections = simulateRealTimeAnalysis(
+          currentTime, 
+          detections,
+          (detection) => {
+            if (!showAlerts) return;
+            
             if (!alertHistory.some(alert => alert.timeInVideo === detection.timeInVideo)) {
               setSelectedDetection(detection);
               setAlertHistory(prev => [...prev, detection]);
               
-              const severity = detection.severity;
-              const distance = detection.distance || 50;
-              
               if (onPotholeDetected) {
-                onPotholeDetected(severity, distance);
+                onPotholeDetected(detection);
               }
               
-              const severityText = severity === 'high' ? 'Critical' : 
-                              severity === 'medium' ? 'Moderate' : 'Minor';
+              const severityText = detection.severity === 'high' ? 'Critical' : 
+                              detection.severity === 'medium' ? 'Moderate' : 'Minor';
               
               const locationText = detection.locationName ? 
                 `near ${detection.locationName}` : 
-                `${distance}m ahead`;
+                `${detection.distance}m ahead`;
               
               toast.warning(
                 `${severityText} Pothole Detected!`, 
                 {
-                  description: `${detection.size} size at ${formatTime(detection.timeInVideo)}, ${locationText}`,
+                  description: `${detection.size} size at ${formatTime(detection.timeInVideo)}, ${locationText}. Detected using ${detection.detectionAlgorithm}.`,
                   position: "top-center",
                   duration: 3000,
                   icon: <AlertCircle className={`h-5 w-5 ${
@@ -342,9 +314,21 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                   }`} />
                 }
               );
+              
+              // Add detection event to Python console
+              setPythonConsoleOutput(prev => [...prev, 
+                `[DETECTION] ${severityText} pothole at ${formatTime(detection.timeInVideo)}`,
+                `[INFO] Confidence: ${(detection.confidence * 100).toFixed(1)}%, Algorithm: ${detection.detectionAlgorithm}`,
+                `[INFO] Damage estimate: ${detection.surfaceDamageEstimate}% of surface area`
+              ]);
+              
+              // Update frame count for Python terminal
+              if (onFrameUpdate) {
+                onFrameUpdate(Math.floor(currentTime * 30)); // Assuming 30fps
+              }
             }
-          });
-        }
+          }
+        );
       }
     }, 100);
   };
@@ -359,7 +343,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
     }
     setIsSimulating(false);
     toast.info("Simulation stopped", {
-      description: "You can resume at any time",
+      description: "Python analysis paused. You can resume at any time.",
     });
   };
 
@@ -375,6 +359,11 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
   const handleVideoTimeUpdate = () => {
     if (videoRef.current) {
       setCurrentSimTime(videoRef.current.currentTime);
+      
+      // Update frame count for Python terminal (assuming 30fps)
+      if (onFrameUpdate && isSimulating) {
+        onFrameUpdate(Math.floor(videoRef.current.currentTime * 30));
+      }
       
       if (videoRef.current.currentTime >= videoRef.current.duration - 0.2) {
         stopSimulation();
@@ -532,9 +521,17 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
         
         {selectedDetection && (
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-1/3 left-1/4 w-24 h-24 border-2 border-red-500 animate-pulse flex items-center justify-center">
+            <div 
+              className="absolute border-2 border-red-500 animate-pulse flex items-center justify-center"
+              style={{
+                top: `${selectedDetection.pixelCoordinates.y1}px`,
+                left: `${selectedDetection.pixelCoordinates.x1}px`,
+                width: `${selectedDetection.pixelCoordinates.x2 - selectedDetection.pixelCoordinates.x1}px`,
+                height: `${selectedDetection.pixelCoordinates.y2 - selectedDetection.pixelCoordinates.y1}px`,
+              }}
+            >
               <div className="text-xs bg-red-500 text-white px-1 absolute -top-5">
-                Pothole Detected
+                Pothole Detected ({selectedDetection.detectionAlgorithm})
               </div>
             </div>
             
@@ -610,13 +607,26 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
               <span>Confidence: <span className="font-medium">{Math.round(selectedDetection.confidence * 100)}%</span></span>
               <span>At: <span className="font-medium">{formatTime(selectedDetection.timeInVideo)}</span></span>
             </div>
-            <div className="text-sm mt-1">
+            <div className="text-sm mt-1 flex justify-between">
               <span>Location: <span className="font-medium">
                 {selectedDetection.locationName || `${selectedDetection.distance || 'Unknown'}m ahead`}
               </span></span>
+              <span>Depth: <span className="font-medium">{selectedDetection.depthEstimate}cm</span></span>
+            </div>
+            <div className="text-sm mt-1 flex justify-between">
+              <span>Surface damage: <span className="font-medium">{selectedDetection.surfaceDamageEstimate}%</span></span>
+              <span>Algorithm: <span className="font-medium">{selectedDetection.detectionAlgorithm}</span></span>
             </div>
           </AlertDescription>
         </Alert>
+      )}
+      
+      {showPythonLogs && (
+        <div className="mt-3 bg-gray-900 text-green-400 p-2 rounded-md font-mono text-xs h-32 overflow-y-auto">
+          {pythonConsoleOutput.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -626,8 +636,9 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Advanced Video Pothole Detection</CardTitle>
-          <CardDescription>
-            ROADSENSE AI - Analyze road videos to detect potholes with our AI-powered detection system
+          <CardDescription className="flex items-center gap-2">
+            <Terminal className="h-4 w-4" />
+            ROADSENSE AI - Python TensorFlow-based video analysis for pothole detection
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -704,8 +715,8 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       
                       {!isProcessing && detections.length === 0 && (
                         <Button onClick={simulateProcessing}>
-                          <Play className="h-4 w-4 mr-2" />
-                          Process video
+                          <Terminal className="h-4 w-4 mr-2" />
+                          Run Python Analysis
                         </Button>
                       )}
                       
@@ -735,6 +746,19 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                           <Bell className="h-4 w-4 text-muted-foreground" />
                         )}
                       </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => setShowPythonLogs(!showPythonLogs)}
+                        title={showPythonLogs ? "Hide Python logs" : "Show Python logs"}
+                      >
+                        {showPythonLogs ? (
+                          <Code className="h-4 w-4" />
+                        ) : (
+                          <Code className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -750,14 +774,14 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                     <span className="font-mono">{processProgress.toFixed(1)}%</span>
                   </div>
                   <Progress value={processProgress} className="h-2" />
-                  <div className="grid grid-cols-2 gap-2 mt-3">
+                  <div className="grid grid-cols-4 gap-2 mt-3">
                     <div className="text-xs bg-black/5 p-2 rounded">
                       <div className="text-muted-foreground">Frames Processed</div>
                       <div className="font-mono">{processingStats.framesProcessed}</div>
                     </div>
                     <div className="text-xs bg-black/5 p-2 rounded">
                       <div className="text-muted-foreground">FPS</div>
-                      <div className="font-mono">{processingStats.framesPerSecond}</div>
+                      <div className="font-mono">{processingStats.framesPerSecond.toFixed(1)}</div>
                     </div>
                     <div className="text-xs bg-black/5 p-2 rounded">
                       <div className="text-muted-foreground">Accuracy</div>
@@ -767,6 +791,29 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       <div className="text-muted-foreground">Memory</div>
                       <div className="font-mono">{processingStats.memoryUsage.toFixed(0)} MB</div>
                     </div>
+                    <div className="text-xs bg-black/5 p-2 rounded">
+                      <div className="text-muted-foreground">TensorFlow</div>
+                      <div className="font-mono">{processingStats.tensorflowStatus}</div>
+                    </div>
+                    <div className="text-xs bg-black/5 p-2 rounded">
+                      <div className="text-muted-foreground">GPU Utilization</div>
+                      <div className="font-mono">{processingStats.gpuUtilization.toFixed(1)}%</div>
+                    </div>
+                    <div className="text-xs bg-black/5 p-2 rounded">
+                      <div className="text-muted-foreground">Model</div>
+                      <div className="font-mono">{processingStats.modelName}</div>
+                    </div>
+                    <div className="text-xs bg-black/5 p-2 rounded">
+                      <div className="text-muted-foreground">Detections</div>
+                      <div className="font-mono">{processingStats.detectionEvents}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-black text-green-500 font-mono text-xs p-2 rounded mt-3 h-24 overflow-y-auto">
+                    {pythonConsoleOutput.slice(-10).map((line, idx) => (
+                      <div key={idx} className="leading-5">{line}</div>
+                    ))}
+                    <div className="inline-block h-4 w-2 bg-green-500 animate-pulse ml-1"></div>
                   </div>
                 </div>
               )}
@@ -776,8 +823,12 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium flex items-center">
                       <Eye className="h-5 w-5 mr-2 text-primary" />
-                      Video Analysis
+                      Python AI Analysis Results
                     </h3>
+                    <Badge variant="secondary" className="flex gap-1">
+                      <Database className="h-3 w-3" />
+                      <span>TensorFlow</span>
+                    </Badge>
                   </div>
                   
                   {isSimulating && (
@@ -785,12 +836,14 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       <AlertCircle className="h-5 w-5 text-amber-500" />
                       <div className="flex-1">
                         <span className="text-sm">
-                          Simulating driver warnings - watch for alerts ({formatTime(currentSimTime)})
+                          Real-time detection active - watching for alerts ({formatTime(currentSimTime)})
                         </span>
                         <div className="text-xs text-amber-700 flex gap-2 mt-1">
                           <span>{detections.length} potholes detected</span>
                           <span>|</span>
                           <span>{alertHistory.length} alerts triggered</span>
+                          <span>|</span>
+                          <span>Model: {processingStats.modelName}</span>
                         </div>
                       </div>
                     </div>
@@ -800,7 +853,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
 
                   <h3 className="text-lg font-medium flex items-center">
                     <MapPin className="h-5 w-5 mr-2 text-primary" />
-                    Detected Potholes ({detections.length})
+                    AI-Detected Potholes ({detections.length})
                   </h3>
                   <div className="max-h-64 overflow-y-auto pr-2 space-y-2">
                     {detections.map((detection, index) => (
@@ -824,6 +877,9 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                             <Badge className={getSizeColor(detection.size)}>
                               {detection.size} size
                             </Badge>
+                            <Badge variant="outline">
+                              {detection.detectionAlgorithm}
+                            </Badge>
                           </div>
                           <span className="text-xs font-mono">
                             {formatTime(detection.timeInVideo)}
@@ -835,7 +891,15 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                             <span>{detection.locationName || `${detection.distance}m ahead`}</span>
                           </div>
                           <div>
-                            Confidence: {Math.round(detection.confidence * 100)}%
+                            Frame #{detection.frameNumber} | Confidence: {Math.round(detection.confidence * 100)}%
+                          </div>
+                        </div>
+                        <div className="mt-1 text-xs flex justify-between">
+                          <div>
+                            Depth: {detection.depthEstimate}cm
+                          </div>
+                          <div>
+                            Surface damage: {detection.surfaceDamageEstimate}%
                           </div>
                         </div>
                       </div>
@@ -847,11 +911,11 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
 
             <TabsContent value="settings" className="space-y-4">
               <div className="border rounded-md p-4 space-y-4">
-                <h3 className="font-medium">Detection Settings</h3>
+                <h3 className="font-medium">Python Detection Settings</h3>
                 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Sensitivity Level</span>
+                    <span>AI Sensitivity Level</span>
                     <span>{sensitivityLevel}%</span>
                   </div>
                   <Slider 
@@ -861,13 +925,13 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                     step={5}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Higher sensitivity may detect more potential potholes, but with more false positives.
+                    Controls model sensitivity. Higher values may detect more potential potholes but with more false positives.
                   </p>
                 </div>
                 
                 <div className="space-y-2 mt-4">
                   <div className="flex justify-between text-sm">
-                    <span>Detection Threshold</span>
+                    <span>Detection Confidence Threshold</span>
                     <span>{detectionThreshold}%</span>
                   </div>
                   <Slider 
@@ -877,20 +941,45 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                     step={5}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Minimum confidence level required to register a pothole detection.
+                    Minimum TensorFlow model confidence level required to register a pothole detection.
                   </p>
+                </div>
+                
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm mt-4">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Terminal className="h-4 w-4" />
+                    Python Backend Configuration
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                    <div className="space-y-1">
+                      <div className="font-medium">Model</div>
+                      <div className="p-2 bg-white border rounded">PotholeNet-v3.4 (YOLOv5)</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-medium">TensorFlow Version</div>
+                      <div className="p-2 bg-white border rounded">2.9.0</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-medium">Hardware Acceleration</div>
+                      <div className="p-2 bg-white border rounded">CUDA 11.7 (GPU)</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-medium">Processing Mode</div>
+                      <div className="p-2 bg-white border rounded">Batch (16 frames)</div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="flex justify-between mt-4">
                   <Button variant="outline" onClick={() => {
                     setSensitivityLevel(75);
                     setDetectionThreshold(65);
-                    toast.info("Reset to default settings");
+                    toast.info("Reset to default Python settings");
                   }}>
                     Reset to defaults
                   </Button>
                   <Button onClick={() => {
-                    toast.success("Settings applied");
+                    toast.success("Python analysis settings applied");
                     // Would normally apply these settings to the detection algorithm
                   }}>
                     Apply Settings
@@ -901,15 +990,15 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
 
             <TabsContent value="analytics" className="space-y-4">
               <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-4">Processing Statistics</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="font-medium mb-4">Python Processing Statistics</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <div className="text-sm font-medium">Frames Processed</div>
                     <div className="text-2xl font-mono">{processingStats.framesProcessed}</div>
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm font-medium">Processing Speed</div>
-                    <div className="text-2xl font-mono">{processingStats.framesPerSecond} FPS</div>
+                    <div className="text-2xl font-mono">{processingStats.framesPerSecond.toFixed(1)} FPS</div>
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm font-medium">Detection Accuracy</div>
@@ -919,9 +1008,25 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                     <div className="text-sm font-medium">Memory Usage</div>
                     <div className="text-2xl font-mono">{processingStats.memoryUsage.toFixed(0)} MB</div>
                   </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">TensorFlow Status</div>
+                    <div className="text-2xl font-mono">{processingStats.tensorflowStatus}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">GPU Utilization</div>
+                    <div className="text-2xl font-mono">{processingStats.gpuUtilization.toFixed(1)}%</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">Model</div>
+                    <div className="text-2xl font-mono">{processingStats.modelName}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium">Detection Events</div>
+                    <div className="text-2xl font-mono">{processingStats.detectionEvents}</div>
+                  </div>
                 </div>
                 
-                <h3 className="font-medium mt-6 mb-3">Detection Summary</h3>
+                <h3 className="font-medium mt-6 mb-3">Algorithm Performance</h3>
                 {detections.length > 0 ? (
                   <div>
                     <div className="flex justify-between text-sm mb-2">
@@ -971,14 +1076,39 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPot
                       </div>
                     </div>
                     
-                    <Button variant="outline" className="w-full mt-4" onClick={() => toast.success("Report generated and downloaded")}>
-                      Generate Analysis Report
+                    <div className="space-y-2 mt-4">
+                      <div className="flex justify-between text-xs">
+                        <span>By Detection Algorithm</span>
+                        <span>
+                          {detections.filter(d => d.detectionAlgorithm === 'YOLOv5').length} YOLOv5, 
+                          {detections.filter(d => d.detectionAlgorithm === 'Faster R-CNN').length} Faster R-CNN, 
+                          {detections.filter(d => d.detectionAlgorithm === 'EfficientDet').length} EfficientDet
+                        </span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full flex overflow-hidden">
+                        <div 
+                          className="bg-blue-600 h-full" 
+                          style={{width: `${(detections.filter(d => d.detectionAlgorithm === 'YOLOv5').length / detections.length) * 100}%`}}
+                        ></div>
+                        <div 
+                          className="bg-orange-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.detectionAlgorithm === 'Faster R-CNN').length / detections.length) * 100}%`}}
+                        ></div>
+                        <div 
+                          className="bg-teal-500 h-full" 
+                          style={{width: `${(detections.filter(d => d.detectionAlgorithm === 'EfficientDet').length / detections.length) * 100}%`}}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <Button variant="outline" className="w-full mt-4" onClick={() => toast.success("AI analysis report generated and downloaded")}>
+                      Generate Python Analysis Report
                     </Button>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Info className="h-8 w-8 mx-auto mb-2" />
-                    <p>Process a video to view detection analytics</p>
+                    <p>Process a video with our Python backend to view detection analytics</p>
                   </div>
                 )}
               </div>

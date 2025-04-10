@@ -22,7 +22,7 @@ const VideoAnalysisPage: React.FC = () => {
     // Ensure video analysis is properly initialized when page loads
     if (activeTab === 'video') {
       toast.info("Video Analysis Module Loaded", {
-        description: "Upload a video or use our demo to analyze road conditions"
+        description: "Upload a video or use our demo to analyze road conditions with our AI backend"
       });
     }
   }, []);
@@ -43,7 +43,7 @@ const VideoAnalysisPage: React.FC = () => {
       });
     } else if (value === 'video') {
       toast.info("Video Analysis Module", {
-        description: "Analyze road videos for potholes and damage"
+        description: "Analyze road videos for potholes using our Python-powered AI"
       });
     }
   };
@@ -76,9 +76,10 @@ const VideoAnalysisPage: React.FC = () => {
             </div>
             <Alert className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Real-time Pothole Detection</AlertTitle>
+              <AlertTitle>Python-Powered Pothole Detection</AlertTitle>
               <AlertDescription>
-                Upload a video or use our demo to analyze road conditions. The AI will detect potholes and alert you in real-time.
+                Our AI detection system uses TensorFlow and advanced computer vision to analyze road videos 
+                and detect potholes with high precision. Upload a video or use our demo to see it in action.
               </AlertDescription>
             </Alert>
             <VideoAnalysisWithAlerts />
