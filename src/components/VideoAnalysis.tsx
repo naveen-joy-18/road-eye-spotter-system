@@ -67,6 +67,7 @@ const INDIAN_LOCATIONS = [
 ];
 
 const VideoAnalysis: React.FC<VideoAnalysisProps> = ({ onSimulationChange, onPotholeDetected }) => {
+  
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
