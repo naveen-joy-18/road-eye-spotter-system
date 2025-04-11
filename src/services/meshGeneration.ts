@@ -14,6 +14,7 @@ interface MeshGenerationResult {
   url?: string;
   fileName?: string;
   error?: string;
+  imageUrl?: string;
 }
 
 /**
@@ -64,7 +65,8 @@ export const generate3DMesh = async (imageUrl: string): Promise<MeshGenerationRe
     return {
       success: true,
       url: meshUrl,
-      fileName: fileName
+      fileName: fileName,
+      imageUrl: imageUrl
     };
   } catch (error) {
     console.error("Error generating 3D mesh:", error);

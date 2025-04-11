@@ -6,7 +6,7 @@ import {
   Gauge, MapPin, Navigation, Search, Layers, 
   AlertCircle, LocateFixed, Eye, EyeOff, 
   Route, Download, Compass, Info, MapPinOff, Calendar,
-  Cube3d
+  Box
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -515,6 +515,20 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                           className={`rounded-full ${marker.isUser ? 'h-4 w-4 border-2 border-white animate-pulse' : 'h-3 w-3 animate-pulse-glow'} ${selectedPothole === marker.id ? 'ring-2 ring-white' : ''}`}
                           style={{ backgroundColor: marker.color }}
                         />
+                        {selectedPothole === marker.id && marker.info.imageUrl && (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="absolute -right-8 -bottom-8 h-6 w-6 rounded-full bg-primary/80 hover:bg-primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGenerate3DMesh(marker.id);
+                            }}
+                            disabled={generating3D}
+                          >
+                            <Box className="h-3 w-3 text-white" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -558,7 +572,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             </div>
             
             {showSpeedometer && (
-              <div className="absolute bottom-4 left-4 neo-glass p-3 rounded-full shadow-md flex items-center gap-2 glow-effect">
+              <div className="absolute bottom-4 left-4 neo-glass p-3 rounded-full shadow-md glow-effect">
                 <Gauge className="h-5 w-5 text-primary" />
                 <div className="text-sm font-futuristic">{speedLimit} km/h</div>
               </div>
