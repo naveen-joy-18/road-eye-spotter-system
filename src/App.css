@@ -71,7 +71,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Fix remaining white backgrounds */
+/* Fix all remaining white backgrounds */
 body {
   @apply bg-background text-foreground;
 }
@@ -100,18 +100,23 @@ h2.subtitle {
   @apply bg-card/80 backdrop-blur-md border border-white/10 rounded-xl shadow-lg p-6;
 }
 
-/* Fix for additional white backgrounds */
+/* Fix for ALL white backgrounds */
 .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-  @apply bg-card;
+  @apply bg-background;
 }
 
-/* Fix for text colors on dark backgrounds */
+/* Fix for text colors on dark backgrounds to ensure visibility */
 .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
   @apply text-foreground;
 }
 
 .text-gray-400, .text-gray-300 {
   @apply text-muted-foreground;
+}
+
+/* Make sure no text is invisible */
+.text-xs, .text-sm, .text-base, .text-lg, .text-xl {
+  @apply text-foreground;
 }
 
 /* 3D model viewer container */
@@ -143,4 +148,46 @@ h2.subtitle {
 
 .rotate-3d {
   animation: rotate3d 10s linear infinite;
+}
+
+/* Fix all map related components */
+.map-overlay {
+  @apply bg-card/90 backdrop-blur-md border border-white/10 text-foreground;
+  z-index: 10;
+}
+
+.map-control-panel {
+  @apply bg-background/80 backdrop-blur-md border border-white/10 text-foreground;
+  z-index: 20;
+}
+
+/* Make sure all popover contents are visible */
+.popover-content {
+  @apply bg-card border border-border shadow-lg z-50;
+}
+
+/* Fix the z-index stacking for map layers */
+.map-layers-panel {
+  z-index: 15;
+}
+
+/* Ensure tabs are properly styled */
+.tabs-container {
+  @apply bg-background;
+}
+
+/* Make speedometer display flex */
+.speedometer {
+  @apply flex items-center gap-2;
+}
+
+/* Fix spacing inconsistencies */
+.map-padding {
+  padding: 1.5rem;
+}
+
+/* Adjust text spacing to prevent overlap */
+.text-prevent-overlap {
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
 }

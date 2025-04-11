@@ -40,7 +40,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
   };
 
   return (
-    <div className="absolute top-4 right-4 flex flex-col gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-md shadow-md transition-all duration-300">
+    <div className="absolute top-4 right-4 map-control-panel p-2 rounded-md shadow-md transition-all duration-300 z-30">
       <div className="flex justify-between items-center mb-1">
         <span className="text-xs font-medium ml-1">Map Controls</span>
         <Button 
@@ -61,7 +61,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 <Button
                   size="icon"
                   variant="secondary"
-                  className={`bg-white shadow-sm hover:bg-gray-100 transition-all ${locatingPosition ? 'animate-pulse' : ''}`}
+                  className={`bg-background shadow-sm hover:bg-muted transition-all ${locatingPosition ? 'animate-pulse' : ''}`}
                   onClick={handleGetLocation}
                   disabled={locatingPosition}
                 >
@@ -78,7 +78,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="bg-white shadow-sm hover:bg-gray-100 transition-all"
+                  className="bg-background shadow-sm hover:bg-muted transition-all"
                   onClick={onZoomIn}
                 >
                   <span className="text-lg font-bold">+</span>
@@ -94,7 +94,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="bg-white shadow-sm hover:bg-gray-100 transition-all"
+                  className="bg-background shadow-sm hover:bg-muted transition-all"
                   onClick={onZoomOut}
                 >
                   <span className="text-lg font-bold">−</span>
@@ -110,7 +110,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="bg-white shadow-sm hover:bg-gray-100 transition-all"
+                  className="bg-background shadow-sm hover:bg-muted transition-all"
                   onClick={onToggleMapStyle}
                 >
                   <Layers className="h-5 w-5 text-primary" />
@@ -126,7 +126,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 <Button
                   size="icon"
                   variant={roadQualityActive ? "default" : "secondary"}
-                  className={`${roadQualityActive ? "bg-primary" : "bg-white"} shadow-sm transition-all`}
+                  className={`${roadQualityActive ? "bg-primary" : "bg-background"} shadow-sm transition-all`}
                   onClick={onToggleRoadQuality}
                 >
                   <AlertCircle className={`h-5 w-5 ${roadQualityActive ? "text-white" : "text-primary"}`} />

@@ -59,12 +59,12 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
           </div>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="start">
+      <PopoverContent className="w-72 p-0 map-overlay z-50" align="start">
         <div className="p-4">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-medium text-sm">{pothole.address}</h3>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Reported {new Date(pothole.reportedAt).toLocaleDateString()}
               </p>
             </div>
@@ -86,15 +86,15 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
               )}>
                 {pothole.severity.charAt(0).toUpperCase() + pothole.severity.slice(1)} Severity
               </Badge>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 {pothole.upvotes} upvotes
               </span>
             </div>
           </div>
         </div>
         <div className="border-t border-border">
-          <div className="h-24 bg-gray-100 flex items-center justify-center">
-            <span className="text-gray-500 text-sm">Photo unavailable</span>
+          <div className="h-24 bg-background/50 flex items-center justify-center">
+            <span className="text-muted-foreground text-sm">Photo unavailable</span>
           </div>
         </div>
       </PopoverContent>

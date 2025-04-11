@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import VideoAnalysisWithAlerts from '@/components/VideoAnalysisWithAlerts';
@@ -52,7 +53,7 @@ const VideoAnalysisPage: React.FC = () => {
     <Layout activeTab="video" onTabChange={(tab) => setActiveTab(tab)}>
       <div className="container mx-auto py-6">
         <Tabs defaultValue="video" value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-5 bg-muted">
             <TabsTrigger value="video">Video Analysis</TabsTrigger>
             <TabsTrigger value="map">Map</TabsTrigger>
             <TabsTrigger value="report">Report</TabsTrigger>
@@ -65,7 +66,7 @@ const VideoAnalysisPage: React.FC = () => {
           
           <TabsContent value="video" className="mt-4 animate-in fade-in-50">
             <div className="mb-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Road Condition Video Analysis</h2>
+              <h2 className="text-2xl font-bold text-gradient">Road Condition Video Analysis</h2>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => toast.info("Documentation opened in new tab")}>
                   Help Guide
@@ -75,10 +76,10 @@ const VideoAnalysisPage: React.FC = () => {
                 </Button>
               </div>
             </div>
-            <Alert className="mb-4">
+            <Alert className="mb-4 bg-card border-border">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>AI-Powered Pothole Detection</AlertTitle>
-              <AlertDescription>
+              <AlertDescription className="text-prevent-overlap">
                 Our advanced AI detection system uses Cerebras AI and computer vision to analyze road videos 
                 and detect potholes with high precision. Upload a video or use our demo to see it in action.
               </AlertDescription>
@@ -92,9 +93,9 @@ const VideoAnalysisPage: React.FC = () => {
           
           <TabsContent value="report" className="mt-4 animate-in fade-in-50">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-lg border border-border space-y-4">
+              <div className="bg-card p-6 rounded-lg border border-border space-y-4">
                 <h2 className="text-2xl font-bold mb-4">Report Road Damage</h2>
-                <Alert>
+                <Alert className="bg-background border-border">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Help improve Indian roads</AlertTitle>
                   <AlertDescription>
@@ -103,7 +104,7 @@ const VideoAnalysisPage: React.FC = () => {
                 </Alert>
                 <ReportForm />
               </div>
-              <div className="bg-white p-6 rounded-lg border border-border">
+              <div className="bg-card p-6 rounded-lg border border-border">
                 <h2 className="text-xl font-bold mb-4">Recently Reported Issues</h2>
                 <div className="space-y-3">
                   {[
@@ -114,19 +115,19 @@ const VideoAnalysisPage: React.FC = () => {
                     { location: "Park Street, Kolkata", severity: "medium", date: "2025-04-05", size: "large" }
                   ].map((report, index) => (
                     <div key={index} className={`p-3 rounded-md border ${
-                      report.severity === 'high' ? 'border-red-200 bg-red-50' :
-                      report.severity === 'medium' ? 'border-yellow-200 bg-yellow-50' :
-                      'border-green-200 bg-green-50'
+                      report.severity === 'high' ? 'border-red-500/30 bg-red-950/20' :
+                      report.severity === 'medium' ? 'border-yellow-500/30 bg-yellow-950/20' :
+                      'border-green-500/30 bg-green-950/20'
                     }`}>
                       <div className="flex justify-between">
                         <span className="font-medium text-sm">{report.location}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           report.severity === 'high' ? 'bg-red-500 text-white' :
-                          report.severity === 'medium' ? 'bg-yellow-500 text-white' :
+                          report.severity === 'medium' ? 'bg-yellow-500 text-black' :
                           'bg-green-500 text-white'
                         }`}>{report.severity}</span>
                       </div>
-                      <div className="text-xs mt-1 text-gray-500 flex justify-between">
+                      <div className="text-xs mt-1 text-muted-foreground flex justify-between">
                         <span>Reported: {report.date}</span>
                         <span>Size: {report.size}</span>
                       </div>
@@ -138,10 +139,10 @@ const VideoAnalysisPage: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="dashboard" className="mt-4 animate-in fade-in-50">
-            <div className="bg-white p-6 rounded-lg border border-border">
-              <h2 className="text-2xl font-bold mb-6">Analytics Dashboard</h2>
+            <div className="bg-card p-6 rounded-lg border border-border">
+              <h2 className="text-2xl font-bold mb-6 text-gradient">Analytics Dashboard</h2>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                <div className="border rounded-lg p-4 bg-blue-950/20 border-blue-500/30">
                   <h3 className="font-medium text-lg mb-2">Top Affected Areas</h3>
                   <ol className="list-decimal pl-4 space-y-1">
                     <li>Delhi - 87 reports</li>
@@ -151,7 +152,7 @@ const VideoAnalysisPage: React.FC = () => {
                     <li>Kolkata - 52 reports</li>
                   </ol>
                 </div>
-                <div className="border rounded-lg p-4 bg-amber-50 border-amber-200">
+                <div className="border rounded-lg p-4 bg-amber-950/20 border-amber-500/30">
                   <h3 className="font-medium text-lg mb-2">Severity Distribution</h3>
                   <div className="space-y-2">
                     <div>
@@ -159,7 +160,7 @@ const VideoAnalysisPage: React.FC = () => {
                         <span>Critical</span>
                         <span>28%</span>
                       </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-2 bg-background rounded-full overflow-hidden">
                         <div className="h-full bg-red-500" style={{ width: '28%' }}></div>
                       </div>
                     </div>
@@ -168,7 +169,7 @@ const VideoAnalysisPage: React.FC = () => {
                         <span>Moderate</span>
                         <span>45%</span>
                       </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-2 bg-background rounded-full overflow-hidden">
                         <div className="h-full bg-yellow-500" style={{ width: '45%' }}></div>
                       </div>
                     </div>
@@ -177,13 +178,13 @@ const VideoAnalysisPage: React.FC = () => {
                         <span>Minor</span>
                         <span>27%</span>
                       </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-2 bg-background rounded-full overflow-hidden">
                         <div className="h-full bg-green-500" style={{ width: '27%' }}></div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="border rounded-lg p-4 bg-green-50 border-green-200">
+                <div className="border rounded-lg p-4 bg-green-950/20 border-green-500/30">
                   <h3 className="font-medium text-lg mb-2">Monthly Trend</h3>
                   <div className="h-40 flex items-end justify-between gap-2">
                     {["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((month, index) => {
@@ -210,8 +211,8 @@ const VideoAnalysisPage: React.FC = () => {
                 <PotholeChatBot />
               </div>
               <div className="md:col-span-1">
-                <div className="bg-white p-6 rounded-lg border border-border h-full">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <div className="bg-card p-6 rounded-lg border border-border h-full">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2 gradient-text">
                     <Bot className="h-5 w-5 text-primary" />
                     About AI Pothole Chat
                   </h3>
@@ -230,7 +231,7 @@ const VideoAnalysisPage: React.FC = () => {
                       <li>Government policies and reporting systems</li>
                     </ul>
                     
-                    <Alert className="mt-4">
+                    <Alert className="mt-4 bg-background border-border">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Integrated AI System</AlertTitle>
                       <AlertDescription>

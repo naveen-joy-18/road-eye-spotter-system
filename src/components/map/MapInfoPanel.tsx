@@ -70,10 +70,10 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
   };
 
   return (
-    <div className="absolute top-16 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-md shadow-md w-72 border border-gray-200 animate-fade-in">
+    <div className="absolute top-16 left-4 map-overlay p-4 rounded-md shadow-md w-64 border border-gray-500/20 animate-fade-in z-20">
       <div className="flex justify-between items-center">
         <h4 className="font-semibold text-sm mb-2">Road Damage Report</h4>
-        <div className="flex items-center gap-1 text-xs bg-gray-100 rounded-full px-2 py-0.5">
+        <div className="flex items-center gap-1 text-xs bg-background/70 rounded-full px-2 py-0.5">
           {getTrendIcon()}
           <span>{lastUpdated.toLocaleDateString('en-IN')}</span>
         </div>
@@ -88,7 +88,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
             </span>
             <Badge variant="destructive" className="text-xs">{roadDamageStats.critical}</Badge>
           </div>
-          <Progress value={criticalPercent} className="h-1.5 bg-red-100" />
+          <Progress value={criticalPercent} className="h-1.5 bg-red-900/30" />
         </div>
         
         <div>
@@ -99,7 +99,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
             </span>
             <Badge variant="secondary" className="text-xs bg-yellow-500 hover:bg-yellow-600">{roadDamageStats.moderate}</Badge>
           </div>
-          <Progress value={moderatePercent} className="h-1.5 bg-yellow-100" />
+          <Progress value={moderatePercent} className="h-1.5 bg-yellow-900/30" />
         </div>
         
         <div>
@@ -110,12 +110,12 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
             </span>
             <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">{roadDamageStats.minor}</Badge>
           </div>
-          <Progress value={minorPercent} className="h-1.5 bg-green-100" />
+          <Progress value={minorPercent} className="h-1.5 bg-green-900/30" />
         </div>
       </div>
       
       {/* Added section for top cities reporting */}
-      <div className="mt-4 border-t border-gray-200 pt-3">
+      <div className="mt-4 border-t border-gray-500/20 pt-3">
         <h5 className="text-xs font-semibold mb-2 flex items-center gap-1">
           <BarChart3 className="h-3 w-3" />
           Top Cities Reporting
@@ -124,14 +124,14 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({ roadDamageStats }) =
           {topCities.map((city, index) => (
             <div key={index} className="flex justify-between items-center text-xs">
               <span>{city.name}</span>
-              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{city.count}</span>
+              <span className="font-mono bg-background/70 px-1.5 py-0.5 rounded">{city.count}</span>
             </div>
           ))}
         </div>
       </div>
       
-      <div className="mt-3 pt-2 border-t border-gray-200">
-        <div className="flex justify-between items-center text-xs text-gray-600">
+      <div className="mt-3 pt-2 border-t border-gray-500/20">
+        <div className="flex justify-between items-center text-xs">
           <span>Total Reports: <span className="font-medium">{roadDamageStats.total}</span></span>
           <Button 
             size="sm" 

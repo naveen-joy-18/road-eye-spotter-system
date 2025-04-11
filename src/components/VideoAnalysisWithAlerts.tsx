@@ -116,11 +116,11 @@ const VideoAnalysisWithAlerts: React.FC = () => {
         />
       </div>
       <div className="lg:col-span-1">
-        <Card className="h-full">
+        <Card className="h-full bg-card">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-4">
+                <TabsList className="grid grid-cols-4 bg-muted">
                   <TabsTrigger value="alerts" className="flex items-center">
                     <Bell className="h-4 w-4 mr-2" />
                     Driver Alerts
