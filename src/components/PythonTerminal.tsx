@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { executePythonCommand } from '@/services/cerebrasAI';
 
@@ -76,34 +77,34 @@ const PythonTerminal: React.FC<PythonTerminalProps> = ({ active, frameCount, cla
   };
 
   return (
-    <div className={`bg-black text-green-500 font-mono text-xs p-3 rounded-md ${className || ''}`}>
-      <div className="flex justify-between items-center mb-2 border-b border-green-900 pb-1">
-        <div>{command}</div>
+    <div className={`bg-[#131620] text-emerald-400 font-mono text-xs p-3 rounded-md border border-emerald-900/30 shadow-lg ${className || ''}`}>
+      <div className="flex justify-between items-center mb-2 border-b border-emerald-900/50 pb-1">
+        <div className="opacity-80">{command}</div>
         <div className="flex gap-2">
-          <div className={`h-2 w-2 rounded-full ${active ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-          <div className="text-xs text-green-700">{active ? 'RUNNING' : 'STOPPED'}</div>
+          <div className={`h-2 w-2 rounded-full ${active ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+          <div className="text-xs text-emerald-700">{active ? 'RUNNING' : 'STOPPED'}</div>
         </div>
       </div>
       <div 
         ref={terminalRef}
-        className="h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-green-900 scrollbar-track-black pb-1"
+        className="h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-900/50 scrollbar-track-[#0d1117] pb-1"
       >
         {terminalLines.map((line, i) => (
           <div key={i} className="leading-5 break-all">
             {line}
           </div>
         ))}
-        {isProcessing && <div className="inline-block h-4 w-2 bg-green-500 animate-pulse ml-1"></div>}
+        {isProcessing && <div className="inline-block h-4 w-2 bg-emerald-500 animate-pulse ml-1"></div>}
       </div>
       
-      <form onSubmit={handleCommandSubmit} className="mt-2 flex border-t border-green-900 pt-2">
-        <span className="text-green-700 mr-1">$</span>
+      <form onSubmit={handleCommandSubmit} className="mt-2 flex border-t border-emerald-900/50 pt-2">
+        <span className="text-emerald-700 mr-1">$</span>
         <input
           ref={inputRef}
           type="text"
           value={command}
           onChange={(e) => setCommand(e.target.value)}
-          className="flex-1 bg-transparent border-none outline-none text-green-500"
+          className="flex-1 bg-transparent border-none outline-none text-emerald-400"
           placeholder="Enter Python command..."
           disabled={isProcessing}
         />
