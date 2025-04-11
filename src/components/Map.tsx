@@ -59,12 +59,10 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [showSpeedometer, setShowSpeedometer] = useState<boolean>(true);
   const [compassHeading, setCompassHeading] = useState<number>(0);
   
-  // Simulated map markers
   const [mapMarkers, setMapMarkers] = useState<any[]>([]);
   const loadingIntervalRef = useRef<number | null>(null);
   const compassIntervalRef = useRef<number | null>(null);
   
-  // Use our custom hook to simulate map API loading
   const { isLoaded: mapsApiLoaded, loadError } = useGoogleMaps(googleMapsApiKey || '');
   
   const indianCities = [
@@ -81,7 +79,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     { name: "Jaipur", lat: 26.9124, lng: 75.7873, zoom: 12 }
   ];
 
-  // Add global pothole hotspots for world view
   const globalPotholeHotspots = [
     { id: "usa-1", lat: 40.7128, lng: -74.0060, severity: "medium", address: "New York City, USA" },
     { id: "usa-2", lat: 34.0522, lng: -118.2437, severity: "high", address: "Los Angeles, USA" },
@@ -95,11 +92,9 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     { id: "za-1", lat: -26.2041, lng: 28.0473, severity: "low", address: "Johannesburg, South Africa" }
   ];
 
-  // Initialize the map once the API is "loaded"
   useEffect(() => {
     if (!mapsApiLoaded || !mapRef.current) return;
     
-    // Start the loading animation
     const interval = setInterval(() => {
       setMapProgress(prev => {
         const newProgress = prev + 10;
@@ -114,7 +109,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               minor: [...potholes, ...globalPotholeHotspots].filter(p => p.severity === 'low').length
             });
             
-            // Initialize with global view
             setPosition({
               latitude: 20,
               longitude: 0,
@@ -122,7 +116,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             });
             setMapRegion("Global View");
             
-            // Simulate adding markers
             addPotholeMarkers(true);
           }, 500);
           return 100;
@@ -132,13 +125,11 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     }, 150);
     loadingIntervalRef.current = interval as unknown as number;
 
-    // Simulated compass rotation
     const compassInterval = setInterval(() => {
       setCompassHeading(prev => (prev + 1) % 360);
     }, 100);
     compassIntervalRef.current = compassInterval as unknown as number;
     
-    // Return cleanup function
     return () => {
       if (loadingIntervalRef.current) {
         clearInterval(loadingIntervalRef.current);
@@ -152,10 +143,8 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     };
   }, [mapsApiLoaded]);
 
-  // Clean up resources on component unmount
   useEffect(() => {
     return () => {
-      // Clear all intervals
       if (loadingIntervalRef.current) {
         clearInterval(loadingIntervalRef.current);
         loadingIntervalRef.current = null;
@@ -166,12 +155,10 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
         compassIntervalRef.current = null;
       }
       
-      // Clear any other resources
       setMapMarkers([]);
     };
   }, []);
 
-  // Show error if API fails to load
   useEffect(() => {
     if (loadError) {
       toast.error(`Failed to load Map API: ${loadError.message}`);
@@ -180,7 +167,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   }, [loadError]);
 
   const addPotholeMarkers = (isGlobal = false) => {
-    // Create simulated markers for potholes
     try {
       const markersToUse = isGlobal || mapRegion === "Global View" ? 
         [...potholes, ...globalPotholeHotspots] : potholes;
@@ -232,7 +218,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             zoom: 15
           });
           
-          // Add a marker for the user's location
           const userMarker = {
             id: 'user-location',
             position: { lat: latitude, lng: longitude },
@@ -343,7 +328,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     toast.success("Map data downloaded successfully!");
   };
 
-  // Show error when API key is missing
   if (!googleMapsApiKey) {
     return (
       <div className="p-4 border border-red-500 rounded-md bg-red-50 text-red-700">
@@ -401,10 +385,8 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                 </div>
               )}
               
-              {/* Simulated map rendering */}
               {mapLoaded && (
                 <div className="h-full w-full relative">
-                  {/* Base map layer - changes based on mapStyle */}
                   <div 
                     className={`absolute inset-0 ${
                       mapStyle === 'satellite' 
@@ -419,42 +401,34 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                       backgroundRepeat: 'no-repeat'
                     }}
                   >
-                    {/* Map grid lines */}
                     <div className="absolute inset-0 grid grid-cols-12 grid-rows-8">
                       {Array.from({ length: 96 }).map((_, idx) => (
                         <div key={idx} className="border border-blue-900/10"></div>
                       ))}
                     </div>
 
-                    {/* Continent outlines - simplified for visualization */}
                     {mapRegion === "Global View" && mapStyle !== 'satellite' && (
                       <>
-                        {/* World continents simplified outlines */}
                         <div className="absolute top-[20%] left-[15%] w-[20%] h-[30%] bg-gray-800/50 rounded-full blur-md"></div>
                         <div className="absolute top-[15%] left-[40%] w-[30%] h-[25%] bg-gray-800/50 rounded-full blur-md"></div>
                         <div className="absolute top-[50%] left-[65%] w-[15%] h-[20%] bg-gray-800/50 rounded-full blur-md"></div>
                         <div className="absolute top-[60%] left-[15%] w-[15%] h-[15%] bg-gray-800/50 rounded-full blur-md"></div>
-                        {/* Water areas with subtle blue */}
                         <div className="absolute inset-0 bg-blue-900/5"></div>
                       </>
                     )}
                     
-                    {/* India outline when viewing India */}
                     {mapRegion.includes("India") && mapRegion !== "Global View" && mapStyle !== 'satellite' && (
                       <div className="absolute top-[30%] left-[35%] w-[30%] h-[40%] bg-gray-800/50 rounded-lg blur-md"></div>
                     )}
                     
-                    {/* Road Quality Overlay */}
                     {visibleLayers.roadQuality && (
                       <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-yellow-500/20 to-red-500/20 mix-blend-overlay"></div>
                     )}
                     
-                    {/* Traffic Overlay */}
                     {visibleLayers.traffic && (
                       <TrafficOverlay density={trafficDensity} />
                     )}
                     
-                    {/* Equator and Prime Meridian */}
                     {mapRegion === "Global View" && (
                       <>
                         <div className="absolute top-1/2 left-0 right-0 h-px bg-blue-500/20"></div>
@@ -462,7 +436,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                       </>
                     )}
                     
-                    {/* Lat/Long grid for global view */}
                     {mapRegion === "Global View" && (
                       <div className="absolute inset-0">
                         {Array.from({ length: 6 }).map((_, idx) => (
@@ -476,7 +449,6 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                       </div>
                     )}
                     
-                    {/* Markers */}
                     {mapMarkers.filter(marker => marker.visible).map((marker) => (
                       <div 
                         key={marker.id}
@@ -651,13 +623,13 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             <p className="elegant-text text-gray-400 mb-6">Analyze traffic patterns and congestion levels across the global road network</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="bg-card p-4 rounded-lg border border-border">
                 <h3 className="text-lg font-medium mb-2">Current Traffic Status</h3>
                 <div className="flex justify-between items-center">
                   <span>Overall Density:</span>
                   <Badge className="bg-amber-500 hover:bg-amber-600">{trafficDensity}%</Badge>
                 </div>
-                <div className="h-8 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                <div className="h-8 bg-muted rounded-full mt-2 overflow-hidden">
                   <div 
                     className="h-full rounded-full transition-all duration-500"
                     style={{ 
@@ -675,7 +647,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                 </p>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="bg-card p-4 rounded-lg border border-border">
                 <h3 className="text-lg font-medium mb-2">Speed Regulations</h3>
                 <div className="flex justify-between items-center mb-2">
                   <span>Current Limit:</span>
@@ -692,7 +664,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                   onValueChange={(value) => setSpeedLimit(value[0])}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>City: 20-40</span>
                   <span>Highway: 60-80</span>
                   <span>Expressway: 100+</span>
@@ -700,7 +672,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               </div>
             </div>
             
-            <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className="bg-card p-4 rounded-lg border border-border">
               <h3 className="text-lg font-medium mb-4">Regional Traffic Distribution</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 {["North India", "South India", "East India", "West India", "Central India"].map(region => (
@@ -716,5 +688,83 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                 ))}
               </div>
               
-              <div className="h-40 bg-gray-200 rounded-lg mt-4 flex items-end p-4 gap-1">
-                {/*
+              <div className="h-40 bg-muted rounded-lg mt-4 flex items-end p-4 gap-1">
+                <div className="flex-1 h-[30%] bg-primary/40 rounded-t-md"></div>
+                <div className="flex-1 h-[45%] bg-primary/60 rounded-t-md"></div>
+                <div className="flex-1 h-[20%] bg-primary/30 rounded-t-md"></div>
+                <div className="flex-1 h-[60%] bg-primary/70 rounded-t-md"></div>
+                <div className="flex-1 h-[35%] bg-primary/50 rounded-t-md"></div>
+                <div className="flex-1 h-[25%] bg-primary/40 rounded-t-md"></div>
+                <div className="flex-1 h-[40%] bg-primary/60 rounded-t-md"></div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="stats" className="mt-4">
+          <div className="neo-glass p-6 rounded-lg border border-blue-900/20 min-h-[400px]">
+            <h2 className="futuristic-heading text-2xl mb-4 text-gradient">ROAD DAMAGE STATISTICS</h2>
+            <p className="elegant-text text-gray-400 mb-6">Comprehensive analytics of road surface damage across regions</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-card p-4 rounded-lg border border-border flex flex-col items-center">
+                <div className="text-4xl font-bold text-red-500 mb-2">{roadDamageStats.critical}</div>
+                <div className="text-muted-foreground text-sm">Critical Damages</div>
+                <div className="text-xs mt-1 text-red-400">Needs Immediate Repair</div>
+              </div>
+              
+              <div className="bg-card p-4 rounded-lg border border-border flex flex-col items-center">
+                <div className="text-4xl font-bold text-amber-500 mb-2">{roadDamageStats.moderate}</div>
+                <div className="text-muted-foreground text-sm">Moderate Damages</div>
+                <div className="text-xs mt-1 text-amber-400">Scheduled Repairs</div>
+              </div>
+              
+              <div className="bg-card p-4 rounded-lg border border-border flex flex-col items-center">
+                <div className="text-4xl font-bold text-green-500 mb-2">{roadDamageStats.minor}</div>
+                <div className="text-muted-foreground text-sm">Minor Damages</div>
+                <div className="text-xs mt-1 text-green-400">Monitoring Required</div>
+              </div>
+            </div>
+            
+            <div className="bg-card p-4 rounded-lg border border-border">
+              <h3 className="text-lg font-medium mb-4">Regional Breakdown</h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between">
+                    <span>Delhi Region</span>
+                    <span>24 reports</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full mt-1 overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: '80%' }}></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between">
+                    <span>Mumbai Region</span>
+                    <span>18 reports</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full mt-1 overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: '60%' }}></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between">
+                    <span>Bangalore Region</span>
+                    <span>12 reports</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full mt-1 overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: '40%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Map;
