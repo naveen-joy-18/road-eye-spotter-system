@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,13 +7,13 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
+    --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 13%;
+    --card: 222 47% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 11%;
+    --popover: 222 47% 6%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 217.2 91.2% 59.8%;
@@ -35,7 +35,7 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
 
-    --sidebar-background: 223 47% 11%;
+    --sidebar-background: 223 47% 6%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217.2 91.2% 59.8%;
     --sidebar-primary-foreground: 210 40% 98%;
@@ -54,11 +54,15 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased min-h-screen;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-semibold;
+  h1, h2, h3 {
+    @apply font-display font-bold;
+  }
+  
+  h4, h5, h6 {
+    @apply font-futuristic font-semibold;
   }
   
   code, pre {
@@ -76,6 +80,26 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400;
   }
+  
+  .futuristic-heading {
+    @apply font-display uppercase tracking-wider font-bold;
+  }
+  
+  .elegant-text {
+    @apply font-elegant leading-relaxed;
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.25);
+  }
+  
+  .glow-box {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), 0 0 30px rgba(59, 130, 246, 0.15);
+  }
+  
+  .neo-glass {
+    @apply backdrop-blur-md bg-white/5 border border-white/10 shadow-lg;
+  }
 }
 
 #root {
@@ -83,6 +107,7 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  @apply bg-background text-foreground;
 }
 
 .logo {
@@ -139,4 +164,36 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted/80;
+}
+
+/* Animation utilities */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Fixing remaining white backgrounds */
+input, select, textarea {
+  @apply bg-card text-foreground border-border;
+}
+
+button {
+  @apply text-foreground;
+}
+
+.popover-content {
+  @apply bg-card text-foreground;
+}
+
+/* Main content area */
+main, article, section {
+  @apply bg-background text-foreground;
 }

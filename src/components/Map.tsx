@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPosition } from '@/types';
 import PotholeMarker from './PotholeMarker';
@@ -69,6 +68,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const { isLoaded: mapsApiLoaded, loadError } = useGoogleMaps(googleMapsApiKey || '');
   
   const indianCities = [
+    { name: "Global View", lat: 20, lng: 0, zoom: 2 },
     { name: "All India", lat: 20.5937, lng: 78.9629, zoom: 5 },
     { name: "Delhi", lat: 28.6139, lng: 77.2090, zoom: 12 },
     { name: "Mumbai", lat: 19.0760, lng: 72.8777, zoom: 12 },
@@ -79,6 +79,20 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     { name: "Pune", lat: 18.5204, lng: 73.8567, zoom: 12 },
     { name: "Ahmedabad", lat: 23.0225, lng: 72.5714, zoom: 12 },
     { name: "Jaipur", lat: 26.9124, lng: 75.7873, zoom: 12 }
+  ];
+
+  // Add global pothole hotspots for world view
+  const globalPotholeHotspots = [
+    { id: "usa-1", lat: 40.7128, lng: -74.0060, severity: "medium", address: "New York City, USA" },
+    { id: "usa-2", lat: 34.0522, lng: -118.2437, severity: "high", address: "Los Angeles, USA" },
+    { id: "uk-1", lat: 51.5074, lng: -0.1278, severity: "low", address: "London, UK" },
+    { id: "br-1", lat: -23.5505, lng: -46.6333, severity: "high", address: "São Paulo, Brazil" },
+    { id: "au-1", lat: -33.8688, lng: 151.2093, severity: "medium", address: "Sydney, Australia" },
+    { id: "ru-1", lat: 55.7558, lng: 37.6173, severity: "high", address: "Moscow, Russia" },
+    { id: "jp-1", lat: 35.6762, lng: 139.6503, severity: "medium", address: "Tokyo, Japan" },
+    { id: "ng-1", lat: 6.5244, lng: 3.3792, severity: "high", address: "Lagos, Nigeria" },
+    { id: "eg-1", lat: 30.0444, lng: 31.2357, severity: "medium", address: "Cairo, Egypt" },
+    { id: "za-1", lat: -26.2041, lng: 28.0473, severity: "low", address: "Johannesburg, South Africa" }
   ];
 
   // Initialize the map once the API is "loaded"
@@ -94,14 +108,22 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
           setTimeout(() => {
             setMapLoaded(true);
             setRoadDamageStats({
-              total: potholes.length,
-              critical: potholes.filter(p => p.severity === 'high').length,
-              moderate: potholes.filter(p => p.severity === 'medium').length,
-              minor: potholes.filter(p => p.severity === 'low').length
+              total: potholes.length + globalPotholeHotspots.length,
+              critical: [...potholes, ...globalPotholeHotspots].filter(p => p.severity === 'high').length,
+              moderate: [...potholes, ...globalPotholeHotspots].filter(p => p.severity === 'medium').length,
+              minor: [...potholes, ...globalPotholeHotspots].filter(p => p.severity === 'low').length
             });
             
+            // Initialize with global view
+            setPosition({
+              latitude: 20,
+              longitude: 0,
+              zoom: 2
+            });
+            setMapRegion("Global View");
+            
             // Simulate adding markers
-            addPotholeMarkers();
+            addPotholeMarkers(true);
           }, 500);
           return 100;
         }
@@ -157,12 +179,20 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     }
   }, [loadError]);
 
-  const addPotholeMarkers = () => {
+  const addPotholeMarkers = (isGlobal = false) => {
     // Create simulated markers for potholes
     try {
-      const newMarkers = potholes.map(pothole => {
-        const lat = position.latitude + (Math.random() - 0.5) * 0.05;
-        const lng = position.longitude + (Math.random() - 0.5) * 0.05;
+      const markersToUse = isGlobal || mapRegion === "Global View" ? 
+        [...potholes, ...globalPotholeHotspots] : potholes;
+      
+      const newMarkers = markersToUse.map(pothole => {
+        const lat = isGlobal ? 
+          (pothole as any).lat || position.latitude + (Math.random() - 0.5) * (isGlobal ? 10 : 0.05) : 
+          position.latitude + (Math.random() - 0.5) * 0.05;
+        
+        const lng = isGlobal ? 
+          (pothole as any).lng || position.longitude + (Math.random() - 0.5) * (isGlobal ? 20 : 0.05) : 
+          position.longitude + (Math.random() - 0.5) * 0.05;
         
         const markerColor = pothole.severity === 'high' ? 'red' : 
                           pothole.severity === 'medium' ? 'orange' : 'green';
@@ -175,8 +205,8 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
           info: {
             severity: pothole.severity,
             address: pothole.address,
-            reportedAt: pothole.reportedAt,
-            status: pothole.status
+            reportedAt: pothole.reportedAt || new Date().toISOString(),
+            status: pothole.status || 'active'
           },
           visible: true
         };
@@ -271,7 +301,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
       zoom: selectedCity.zoom 
     });
     
-    setTimeout(() => addPotholeMarkers(), 500);
+    setTimeout(() => addPotholeMarkers(region === "Global View"), 500);
     toast.success(`Map region updated to ${region}`);
   };
 
@@ -325,8 +355,9 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
 
   return (
     <div className="flex flex-col gap-4">
+      <h1 className="futuristic-heading text-gradient text-2xl mb-2">POTHOLE DETECTION & MAPPING</h1>
       <Tabs value={mapTabView} onValueChange={setMapTabView} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 font-futuristic">
           <TabsTrigger value="visualization" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             <span>Map Visualization</span>
@@ -342,23 +373,23 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
         </TabsList>
 
         <TabsContent value="visualization" className="mt-4">
-          <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-border">
+          <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-blue-900/30 glow-effect">
             <div 
               ref={mapRef} 
-              className="absolute inset-0 bg-gray-200 transition-all duration-500"
+              className="absolute inset-0 bg-gray-900 transition-all duration-500"
             >
               {(!mapLoaded || !mapsApiLoaded) && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
                   <div className="flex flex-col items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-                    <p className="text-white mt-4 font-medium">Loading India Road Network...</p>
+                    <p className="text-white mt-4 font-futuristic tracking-wider">Loading Global Pothole Network...</p>
                     <div className="w-64 h-2 bg-gray-700 rounded-full mt-4">
                       <div 
                         className="h-full bg-primary rounded-full transition-all duration-300"
                         style={{ width: `${mapProgress}%` }}
                       ></div>
                     </div>
-                    <p className="text-white/70 text-sm mt-2">
+                    <p className="text-white/70 text-sm mt-2 font-futuristic">
                       Loading region: {mapRegion} ({mapProgress}%)
                     </p>
                     {loadError && (
@@ -372,31 +403,77 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               
               {/* Simulated map rendering */}
               {mapLoaded && (
-                <div className="h-full w-full bg-gray-100 relative">
+                <div className="h-full w-full relative">
                   {/* Base map layer - changes based on mapStyle */}
                   <div 
-                    className={`absolute inset-0 ${mapStyle === 'satellite' ? 'bg-[url("/satellite-map-bg.jpg")]' : 'bg-[#f2f2f2]'}`}
+                    className={`absolute inset-0 ${
+                      mapStyle === 'satellite' 
+                        ? 'bg-[url("https://i.imgur.com/WBDTL5C.jpg")]' 
+                        : 'bg-[#0a0b10]'
+                    }`}
                     style={{ 
-                      backgroundImage: mapStyle === 'satellite' ? 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2))' : '',
+                      backgroundImage: mapStyle === 'satellite' 
+                        ? 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url("https://i.imgur.com/WBDTL5C.jpg")' 
+                        : '',
                       backgroundSize: 'cover',
                       backgroundRepeat: 'no-repeat'
                     }}
                   >
                     {/* Map grid lines */}
-                    <div className="absolute inset-0 grid grid-cols-8 grid-rows-8">
-                      {Array.from({ length: 64 }).map((_, idx) => (
-                        <div key={idx} className="border border-gray-300/20"></div>
+                    <div className="absolute inset-0 grid grid-cols-12 grid-rows-8">
+                      {Array.from({ length: 96 }).map((_, idx) => (
+                        <div key={idx} className="border border-blue-900/10"></div>
                       ))}
                     </div>
+
+                    {/* Continent outlines - simplified for visualization */}
+                    {mapRegion === "Global View" && mapStyle !== 'satellite' && (
+                      <>
+                        {/* World continents simplified outlines */}
+                        <div className="absolute top-[20%] left-[15%] w-[20%] h-[30%] bg-gray-800/50 rounded-full blur-md"></div>
+                        <div className="absolute top-[15%] left-[40%] w-[30%] h-[25%] bg-gray-800/50 rounded-full blur-md"></div>
+                        <div className="absolute top-[50%] left-[65%] w-[15%] h-[20%] bg-gray-800/50 rounded-full blur-md"></div>
+                        <div className="absolute top-[60%] left-[15%] w-[15%] h-[15%] bg-gray-800/50 rounded-full blur-md"></div>
+                        {/* Water areas with subtle blue */}
+                        <div className="absolute inset-0 bg-blue-900/5"></div>
+                      </>
+                    )}
+                    
+                    {/* India outline when viewing India */}
+                    {mapRegion.includes("India") && mapRegion !== "Global View" && mapStyle !== 'satellite' && (
+                      <div className="absolute top-[30%] left-[35%] w-[30%] h-[40%] bg-gray-800/50 rounded-lg blur-md"></div>
+                    )}
                     
                     {/* Road Quality Overlay */}
                     {visibleLayers.roadQuality && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-yellow-500/20 to-red-500/20"></div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-yellow-500/20 to-red-500/20 mix-blend-overlay"></div>
                     )}
                     
                     {/* Traffic Overlay */}
                     {visibleLayers.traffic && (
                       <TrafficOverlay density={trafficDensity} />
+                    )}
+                    
+                    {/* Equator and Prime Meridian */}
+                    {mapRegion === "Global View" && (
+                      <>
+                        <div className="absolute top-1/2 left-0 right-0 h-px bg-blue-500/20"></div>
+                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-blue-500/20"></div>
+                      </>
+                    )}
+                    
+                    {/* Lat/Long grid for global view */}
+                    {mapRegion === "Global View" && (
+                      <div className="absolute inset-0">
+                        {Array.from({ length: 6 }).map((_, idx) => (
+                          <div key={`lat-${idx}`} className="absolute left-0 right-0 h-px bg-blue-500/10"
+                               style={{ top: `${(idx + 1) * 100 / 7}%` }}></div>
+                        ))}
+                        {Array.from({ length: 11 }).map((_, idx) => (
+                          <div key={`long-${idx}`} className="absolute top-0 bottom-0 w-px bg-blue-500/10"
+                               style={{ left: `${(idx + 1) * 100 / 12}%` }}></div>
+                        ))}
+                      </div>
                     )}
                     
                     {/* Markers */}
@@ -405,18 +482,14 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                         key={marker.id}
                         className="absolute transform -translate-x-1/2 -translate-y-1/2"
                         style={{ 
-                          left: `${50 + (marker.position.lng - position.longitude) * 50}%`, 
-                          top: `${50 - (marker.position.lat - position.latitude) * 50}%`
+                          left: `${50 + (marker.position.lng - position.longitude) * (mapRegion === "Global View" ? 2.5 : 50)}%`, 
+                          top: `${50 - (marker.position.lat - position.latitude) * (mapRegion === "Global View" ? 5 : 50)}%`
                         }}
                       >
                         <div 
-                          className={`rounded-full ${marker.isUser ? 'h-4 w-4 border-2 border-white pulse-animation' : 'h-3 w-3'}`}
+                          className={`rounded-full ${marker.isUser ? 'h-4 w-4 border-2 border-white animate-pulse' : 'h-3 w-3 animate-pulse-glow'}`}
                           style={{ backgroundColor: marker.color }}
                         />
-                        {/* For debugging - show marker title on hover */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
-                          {marker.title}
-                        </div>
                       </div>
                     ))}
                   </div>
@@ -438,16 +511,16 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <input 
                   type="text" 
-                  placeholder="Search locations in India..." 
-                  className="bg-white pl-8 pr-4 py-2 w-full rounded-md shadow-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Search global pothole database..." 
+                  className="glass-panel pl-8 pr-4 py-2 w-full rounded-md shadow-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-futuristic"
                 />
               </div>
             </div>
 
-            <div className="absolute bottom-20 left-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-md shadow-md">
+            <div className="absolute bottom-20 left-4 right-4 neo-glass p-3 rounded-md">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Traffic Density</span>
-                <span className="text-sm font-medium">{trafficDensity}%</span>
+                <span className="text-sm font-futuristic">Traffic Density</span>
+                <span className="text-sm font-futuristic">{trafficDensity}%</span>
               </div>
               <Slider
                 value={[trafficDensity]}
@@ -460,21 +533,21 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
             </div>
             
             {showSpeedometer && (
-              <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md flex items-center gap-2">
+              <div className="absolute bottom-4 left-4 neo-glass p-3 rounded-full shadow-md flex items-center gap-2 glow-effect">
                 <Gauge className="h-5 w-5 text-primary" />
-                <div className="text-sm font-bold">{speedLimit} km/h</div>
+                <div className="text-sm font-futuristic">{speedLimit} km/h</div>
               </div>
             )}
 
             <div 
-              className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md"
+              className="absolute bottom-4 right-4 neo-glass p-2 rounded-full shadow-md glow-effect"
               style={{ transform: `rotate(${compassHeading}deg)` }}
             >
               <Navigation className="h-6 w-6 text-primary" />
             </div>
             
-            <div className="absolute bottom-16 right-2 text-xs text-gray-600 bg-white/80 px-2 py-1 rounded">
-              Map data © {new Date().getFullYear()} ROADSENSE AI | India Road Network
+            <div className="absolute bottom-16 right-2 text-xs text-gray-400 bg-black/40 px-2 py-1 rounded font-futuristic tracking-wide">
+              Map data © {new Date().getFullYear()} ROADSENSE AI | Global Pothole Network
             </div>
 
             {mapLoaded && (
@@ -483,22 +556,22 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               />
             )}
 
-            <div className="absolute top-16 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-md shadow-md">
+            <div className="absolute top-16 left-4 neo-glass p-3 rounded-md shadow-md">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-start">
+                  <Button variant="outline" size="sm" className="w-full justify-start neo-glass font-futuristic">
                     <MapPin className="h-4 w-4 mr-2" />
                     <span>{mapRegion}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0 w-48">
+                <PopoverContent className="p-0 w-48 neo-glass">
                   <div className="p-1">
                     {indianCities.map(city => (
                       <Button
                         key={city.name}
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-left font-normal"
+                        className="w-full justify-start text-left font-futuristic tracking-wide"
                         onClick={() => handleRegionChange(city.name)}
                       >
                         {city.name}
@@ -509,14 +582,14 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               </Popover>
             </div>
 
-            <div className="absolute top-32 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-md shadow-md">
-              <h4 className="font-medium text-sm mb-2">Map Layers</h4>
+            <div className="absolute top-32 right-4 neo-glass p-3 rounded-md shadow-md">
+              <h4 className="font-futuristic text-sm mb-2 tracking-wide">Map Layers</h4>
               <div className="space-y-2">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   className={cn(
-                    "w-full justify-start",
+                    "w-full justify-start font-futuristic",
                     visibleLayers.potholes ? "text-primary" : "text-muted-foreground"
                   )}
                   onClick={() => toggleLayer('potholes')}
@@ -528,7 +601,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                   variant="ghost" 
                   size="sm" 
                   className={cn(
-                    "w-full justify-start",
+                    "w-full justify-start font-futuristic",
                     visibleLayers.traffic ? "text-primary" : "text-muted-foreground"
                   )}
                   onClick={() => toggleLayer('traffic')}
@@ -540,7 +613,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                   variant="ghost" 
                   size="sm" 
                   className={cn(
-                    "w-full justify-start",
+                    "w-full justify-start font-futuristic",
                     visibleLayers.roadQuality ? "text-primary" : "text-muted-foreground"
                   )}
                   onClick={() => toggleRoadQualityView()}
@@ -554,7 +627,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full mt-1"
+                  className="w-full mt-1 neo-glass font-futuristic"
                   onClick={downloadMapData}
                 >
                   <Download className="h-3 w-3 mr-1" />
@@ -563,7 +636,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               </div>
             </div>
 
-            <div className="absolute top-4 right-20 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-xs flex items-center">
+            <div className="absolute top-4 right-20 neo-glass px-2 py-1 rounded text-xs flex items-center font-futuristic">
               <Calendar className="h-3 w-3 mr-1" />
               {new Date().toLocaleDateString('en-IN')}
             </div>
@@ -573,9 +646,9 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
         </TabsContent>
 
         <TabsContent value="traffic" className="mt-4">
-          <div className="bg-white p-6 rounded-lg border border-border min-h-[400px]">
-            <h2 className="text-2xl font-bold mb-4">Traffic Analysis Dashboard</h2>
-            <p className="text-gray-500 mb-6">Analyze traffic patterns and congestion levels across India's road network</p>
+          <div className="neo-glass p-6 rounded-lg border border-blue-900/20 min-h-[400px] text-foreground">
+            <h2 className="futuristic-heading text-2xl mb-4 text-gradient">TRAFFIC ANALYSIS DASHBOARD</h2>
+            <p className="elegant-text text-gray-400 mb-6">Analyze traffic patterns and congestion levels across the global road network</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 p-4 rounded-lg border">
@@ -644,99 +717,4 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               </div>
               
               <div className="h-40 bg-gray-200 rounded-lg mt-4 flex items-end p-4 gap-1">
-                {/* Fake traffic chart bars */}
-                <div className="h-[20%] w-full bg-green-500 rounded-t"></div>
-                <div className="h-[60%] w-full bg-yellow-500 rounded-t"></div>
-                <div className="h-[40%] w-full bg-amber-500 rounded-t"></div>
-                <div className="h-[80%] w-full bg-red-500 rounded-t"></div>
-                <div className="h-[30%] w-full bg-orange-500 rounded-t"></div>
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>Morning</span>
-                <span>Noon</span>
-                <span>Evening</span>
-                <span>Night</span>
-                <span>Average</span>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="stats" className="mt-4">
-          <div className="bg-white p-6 rounded-lg border border-border">
-            <h2 className="text-2xl font-bold mb-4">Road Damage Statistics</h2>
-            <p className="text-gray-500 mb-6">Comprehensive analysis of road damage across India's transportation network</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gray-50 p-4 rounded-lg border text-center">
-                <h3 className="text-sm font-medium text-gray-500">Total Reports</h3>
-                <p className="text-3xl font-bold">{roadDamageStats.total}</p>
-              </div>
-              <div className="bg-red-50 p-4 rounded-lg border text-center">
-                <h3 className="text-sm font-medium text-gray-500">Critical Damage</h3>
-                <p className="text-3xl font-bold text-red-600">{roadDamageStats.critical}</p>
-              </div>
-              <div className="bg-yellow-50 p-4 rounded-lg border text-center">
-                <h3 className="text-sm font-medium text-gray-500">Moderate Issues</h3>
-                <p className="text-3xl font-bold text-yellow-600">{roadDamageStats.moderate}</p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg border text-center">
-                <h3 className="text-sm font-medium text-gray-500">Minor Reports</h3>
-                <p className="text-3xl font-bold text-green-600">{roadDamageStats.minor}</p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg border">
-                <h3 className="text-lg font-medium mb-4">Severity Distribution</h3>
-                <div className="h-40 bg-white rounded-lg p-4 flex items-end justify-center gap-6">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-[60%] w-8 bg-red-500 rounded"></div>
-                    <span className="text-xs">Critical</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-[40%] w-8 bg-yellow-500 rounded"></div>
-                    <span className="text-xs">Moderate</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-[25%] w-8 bg-green-500 rounded"></div>
-                    <span className="text-xs">Minor</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg border">
-                <h3 className="text-lg font-medium mb-2">Recent Reports</h3>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {potholes.slice(0, 3).map(pothole => (
-                    <div key={pothole.id} className="flex items-center gap-2 p-2 bg-white rounded border">
-                      <div className={cn(
-                        "h-3 w-3 rounded-full",
-                        pothole.severity === 'high' ? "bg-red-500" : 
-                        pothole.severity === 'medium' ? "bg-yellow-500" : "bg-green-500"
-                      )}></div>
-                      <div className="flex-1 text-sm truncate">{pothole.address}</div>
-                      <Badge variant={
-                        pothole.status === 'resolved' ? "default" : 
-                        pothole.status === 'in_progress' ? "secondary" : "outline"
-                      }>
-                        {pothole.status === 'resolved' ? 'Fixed' : 
-                         pothole.status === 'in_progress' ? 'In Progress' : 'Pending'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" className="w-full mt-2">
-                  View All Reports
-                </Button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default Map;
-
+                {/*

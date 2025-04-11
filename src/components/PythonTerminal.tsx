@@ -77,12 +77,12 @@ const PythonTerminal: React.FC<PythonTerminalProps> = ({ active, frameCount, cla
   };
 
   return (
-    <div className={`bg-[#131620] text-emerald-400 font-mono text-xs p-3 rounded-md border border-emerald-900/30 shadow-lg ${className || ''}`}>
+    <div className={`bg-[#0c0d10] text-emerald-400 font-mono text-xs p-3 rounded-md border border-emerald-900/30 shadow-lg animate-pulse-glow ${className || ''}`}>
       <div className="flex justify-between items-center mb-2 border-b border-emerald-900/50 pb-1">
-        <div className="opacity-80">{command}</div>
+        <div className="opacity-80 font-futuristic">{command}</div>
         <div className="flex gap-2">
           <div className={`h-2 w-2 rounded-full ${active ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-          <div className="text-xs text-emerald-700">{active ? 'RUNNING' : 'STOPPED'}</div>
+          <div className="text-xs text-emerald-700 font-futuristic tracking-wider">{active ? 'RUNNING' : 'STOPPED'}</div>
         </div>
       </div>
       <div 
@@ -98,7 +98,7 @@ const PythonTerminal: React.FC<PythonTerminalProps> = ({ active, frameCount, cla
       </div>
       
       <form onSubmit={handleCommandSubmit} className="mt-2 flex border-t border-emerald-900/50 pt-2">
-        <span className="text-emerald-700 mr-1">$</span>
+        <span className="text-emerald-700 mr-1 font-futuristic">$</span>
         <input
           ref={inputRef}
           type="text"

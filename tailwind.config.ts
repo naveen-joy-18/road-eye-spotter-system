@@ -22,7 +22,10 @@ export default {
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
 				heading: ['Montserrat', 'system-ui', 'sans-serif'],
+				display: ['Orbitron', 'sans-serif'],
 				mono: ['JetBrains Mono', 'monospace'],
+				futuristic: ['Rajdhani', 'sans-serif'],
+				elegant: ['Playfair Display', 'serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
