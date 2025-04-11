@@ -41,7 +41,7 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
       <PopoverTrigger asChild>
         <button 
           className={cn(
-            "absolute z-10 -translate-x-1/2 -translate-y-1/2 group",
+            "absolute z-30 -translate-x-1/2 -translate-y-1/2 group",
             severityColor[pothole.severity]
           )}
           style={{ 
@@ -52,6 +52,7 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
           <div className="flex flex-col items-center">
             <div className={cn(
               "h-5 w-5 rounded-full border-2 border-white shadow-md group-hover:scale-110 transition-transform",
+              "hover:animate-pulse"
             )}></div>
             {pothole.severity === 'high' && (
               <AlertTriangle className="h-4 w-4 text-white -mt-4 ml-4" />
@@ -59,25 +60,25 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
           </div>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 map-overlay z-50" align="start">
+      <PopoverContent className="w-72 p-0 map-overlay z-50 bg-card/95 border-border shadow-lg" align="start">
         <div className="p-4">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-medium text-sm">{pothole.address}</h3>
+              <h3 className="font-medium text-sm text-foreground">{pothole.address}</h3>
               <p className="text-xs text-muted-foreground">
                 Reported {new Date(pothole.reportedAt).toLocaleDateString()}
               </p>
             </div>
             <Badge
               variant={pothole.status === 'resolved' ? 'default' : 'outline'}
-              className={pothole.status === 'resolved' ? 'bg-green-500 hover:bg-green-600' : ''}
+              className={pothole.status === 'resolved' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}
             >
               {statusLabel[pothole.status]}
             </Badge>
           </div>
           
           <div className="mt-3">
-            <p className="text-sm">{pothole.description}</p>
+            <p className="text-sm text-foreground">{pothole.description}</p>
             <div className="mt-2 flex items-center gap-2">
               <Badge variant="secondary" className={cn(
                 severityColor[pothole.severity],
@@ -93,7 +94,7 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
           </div>
         </div>
         <div className="border-t border-border">
-          <div className="h-24 bg-background/50 flex items-center justify-center">
+          <div className="h-24 bg-background/60 flex items-center justify-center">
             <span className="text-muted-foreground text-sm">Photo unavailable</span>
           </div>
         </div>

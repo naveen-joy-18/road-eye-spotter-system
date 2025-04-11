@@ -38,9 +38,9 @@
 .card {
   padding: 2em;
   border-radius: var(--radius);
-  background: linear-gradient(to bottom right, rgba(35, 38, 45, 0.7), rgba(25, 28, 35, 0.9));
+  background: linear-gradient(to bottom right, rgba(25, 28, 35, 0.9), rgba(15, 18, 25, 0.95));
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
 }
 
@@ -65,14 +65,14 @@
 }
 
 .glass-panel {
-  background: rgba(35, 38, 45, 0.7);
+  background: rgba(25, 28, 35, 0.85);
   backdrop-filter: blur(10px);
   border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Fix all remaining white backgrounds */
-body {
+/* Force dark backgrounds throughout the application */
+body, html {
   @apply bg-background text-foreground;
 }
 
@@ -97,24 +97,31 @@ h2.subtitle {
 
 /* Card styling */
 .neo-card {
-  @apply bg-card/80 backdrop-blur-md border border-white/10 rounded-xl shadow-lg p-6;
+  @apply bg-card/95 backdrop-blur-md border border-white/10 rounded-xl shadow-lg p-6;
 }
 
-/* Fix for ALL white backgrounds */
-.bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-  @apply bg-background;
+/* Fix ALL white backgrounds by setting specific selectors */
+header, .header, #header, nav, .navbar, #navbar, .map-container, .tabs-container,
+.tab-content, .alert, .card, .dropdown-menu, .popover, .sheet, .bg-white, .bg-gray-50, 
+.bg-gray-100, .bg-gray-200, [class*="bg-white"], [class*="bg-gray"] {
+  @apply bg-background !important;
 }
 
-/* Fix for text colors on dark backgrounds to ensure visibility */
-.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+/* Fix for ALL text colors to ensure visibility */
+p, span, div, h1, h2, h3, h4, h5, h6, label, button, a, li, td, th {
   @apply text-foreground;
 }
 
-.text-gray-400, .text-gray-300 {
-  @apply text-muted-foreground;
+.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+[class*="text-gray"] {
+  @apply text-foreground !important;
 }
 
-/* Make sure no text is invisible */
+.text-gray-400, .text-gray-300, .text-gray-200 {
+  @apply text-muted-foreground !important;
+}
+
+/* Ensure all text is visible */
 .text-xs, .text-sm, .text-base, .text-lg, .text-xl {
   @apply text-foreground;
 }
@@ -123,7 +130,7 @@ h2.subtitle {
 .model-viewer-container {
   width: 100%;
   height: 300px;
-  background: rgba(20, 22, 30, 0.7);
+  background: rgba(15, 17, 25, 0.9);
   border-radius: var(--radius);
   border: 1px solid rgba(59, 130, 246, 0.3);
   overflow: hidden;
@@ -150,30 +157,54 @@ h2.subtitle {
   animation: rotate3d 10s linear infinite;
 }
 
-/* Fix all map related components */
+/* Fix map styles to ensure layer controls are properly positioned */
 .map-overlay {
-  @apply bg-card/90 backdrop-blur-md border border-white/10 text-foreground;
-  z-index: 10;
-}
-
-.map-control-panel {
-  @apply bg-background/80 backdrop-blur-md border border-white/10 text-foreground;
+  @apply bg-card/95 backdrop-blur-md border border-white/10 text-foreground;
   z-index: 20;
 }
 
-/* Make sure all popover contents are visible */
+.map-control-panel {
+  @apply bg-background/95 backdrop-blur-md border border-white/10 text-foreground;
+  z-index: 25;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  max-width: 250px;
+}
+
+/* Fix all popover contents visibility */
 .popover-content {
-  @apply bg-card border border-border shadow-lg z-50;
+  @apply bg-card/95 border border-border shadow-lg;
+  z-index: 50 !important;
 }
 
 /* Fix the z-index stacking for map layers */
 .map-layers-panel {
-  z-index: 15;
+  position: absolute;
+  top: 10px;
+  left: 10px; 
+  z-index: 40;
+  max-width: 250px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Header specific fixes */
+header, .header {
+  @apply bg-background border-border !important;
+}
+
+header *, .header * {
+  @apply text-foreground !important;
 }
 
 /* Ensure tabs are properly styled */
 .tabs-container {
-  @apply bg-background;
+  @apply bg-background !important;
+}
+
+.tab-content {
+  @apply bg-background !important;
 }
 
 /* Make speedometer display flex */
@@ -186,8 +217,48 @@ h2.subtitle {
   padding: 1.5rem;
 }
 
-/* Adjust text spacing to prevent overlap */
+/* Improve text visibility by adjusting line height and spacing */
 .text-prevent-overlap {
-  line-height: 1.5;
-  margin-bottom: 0.5rem;
+  line-height: 1.75 !important;
+  margin-bottom: 0.75rem !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Add drop shadow to text for better contrast */
+.text-shadow {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Fix dropdown menu styling */
+.dropdown-content, [role="menu"], [data-radix-popper-content-wrapper] > * {
+  @apply bg-background/95 border-border backdrop-blur-md !important;
+  z-index: 100 !important;
+}
+
+/* Ensure alert messages are visible */
+.alert, .notification {
+  @apply bg-card/90 border-border text-foreground !important;
+}
+
+/* Fix any remaining white backgrounds in tailwind components */
+.bg-white, .bg-slate-50, .bg-slate-100, .bg-slate-200,
+[class*="bg-white"], [class*="bg-slate"] {
+  @apply bg-background !important;
+}
+
+/* Fix the video analysis panel layout */
+.video-analysis-panel {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fix chatbot text visibility */
+.chat-message {
+  @apply bg-card/90 text-foreground !important;
+}
+
+/* Ensure buttons have visible text */
+button, .btn, [type="button"] {
+  @apply text-foreground !important;
 }

@@ -76,15 +76,17 @@ const VideoAnalysisPage: React.FC = () => {
                 </Button>
               </div>
             </div>
-            <Alert className="mb-4 bg-card border-border">
+            <Alert className="mb-4 bg-card/95 border-border shadow-md">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>AI-Powered Pothole Detection</AlertTitle>
-              <AlertDescription className="text-prevent-overlap">
+              <AlertTitle className="text-shadow">AI-Powered Pothole Detection</AlertTitle>
+              <AlertDescription className="text-prevent-overlap text-shadow">
                 Our advanced AI detection system uses Cerebras AI and computer vision to analyze road videos 
                 and detect potholes with high precision. Upload a video or use our demo to see it in action.
               </AlertDescription>
             </Alert>
-            <VideoAnalysisWithAlerts />
+            <div className="video-analysis-panel">
+              <VideoAnalysisWithAlerts />
+            </div>
           </TabsContent>
           
           <TabsContent value="map" className="mt-4 animate-in fade-in-50">
@@ -93,9 +95,9 @@ const VideoAnalysisPage: React.FC = () => {
           
           <TabsContent value="report" className="mt-4 animate-in fade-in-50">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-card p-6 rounded-lg border border-border space-y-4">
-                <h2 className="text-2xl font-bold mb-4">Report Road Damage</h2>
-                <Alert className="bg-background border-border">
+              <div className="neo-card space-y-4">
+                <h2 className="text-2xl font-bold mb-4 text-shadow">Report Road Damage</h2>
+                <Alert className="bg-background/80 border-border text-shadow">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Help improve Indian roads</AlertTitle>
                   <AlertDescription>
@@ -104,8 +106,8 @@ const VideoAnalysisPage: React.FC = () => {
                 </Alert>
                 <ReportForm />
               </div>
-              <div className="bg-card p-6 rounded-lg border border-border">
-                <h2 className="text-xl font-bold mb-4">Recently Reported Issues</h2>
+              <div className="neo-card">
+                <h2 className="text-xl font-bold mb-4 text-shadow">Recently Reported Issues</h2>
                 <div className="space-y-3">
                   {[
                     { location: "Connaught Place, Delhi", severity: "high", date: "2025-04-09", size: "large" },
@@ -115,12 +117,12 @@ const VideoAnalysisPage: React.FC = () => {
                     { location: "Park Street, Kolkata", severity: "medium", date: "2025-04-05", size: "large" }
                   ].map((report, index) => (
                     <div key={index} className={`p-3 rounded-md border ${
-                      report.severity === 'high' ? 'border-red-500/30 bg-red-950/20' :
-                      report.severity === 'medium' ? 'border-yellow-500/30 bg-yellow-950/20' :
-                      'border-green-500/30 bg-green-950/20'
+                      report.severity === 'high' ? 'border-red-500/30 bg-red-950/40' :
+                      report.severity === 'medium' ? 'border-yellow-500/30 bg-yellow-950/40' :
+                      'border-green-500/30 bg-green-950/40'
                     }`}>
                       <div className="flex justify-between">
-                        <span className="font-medium text-sm">{report.location}</span>
+                        <span className="font-medium text-sm text-shadow">{report.location}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           report.severity === 'high' ? 'bg-red-500 text-white' :
                           report.severity === 'medium' ? 'bg-yellow-500 text-black' :
@@ -139,11 +141,11 @@ const VideoAnalysisPage: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="dashboard" className="mt-4 animate-in fade-in-50">
-            <div className="bg-card p-6 rounded-lg border border-border">
-              <h2 className="text-2xl font-bold mb-6 text-gradient">Analytics Dashboard</h2>
+            <div className="neo-card">
+              <h2 className="text-2xl font-bold mb-6 text-gradient text-shadow">Analytics Dashboard</h2>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="border rounded-lg p-4 bg-blue-950/20 border-blue-500/30">
-                  <h3 className="font-medium text-lg mb-2">Top Affected Areas</h3>
+                <div className="border rounded-lg p-4 bg-blue-950/30 border-blue-500/30">
+                  <h3 className="font-medium text-lg mb-2 text-shadow">Top Affected Areas</h3>
                   <ol className="list-decimal pl-4 space-y-1">
                     <li>Delhi - 87 reports</li>
                     <li>Mumbai - 72 reports</li>
@@ -152,8 +154,8 @@ const VideoAnalysisPage: React.FC = () => {
                     <li>Kolkata - 52 reports</li>
                   </ol>
                 </div>
-                <div className="border rounded-lg p-4 bg-amber-950/20 border-amber-500/30">
-                  <h3 className="font-medium text-lg mb-2">Severity Distribution</h3>
+                <div className="border rounded-lg p-4 bg-amber-950/30 border-amber-500/30">
+                  <h3 className="font-medium text-lg mb-2 text-shadow">Severity Distribution</h3>
                   <div className="space-y-2">
                     <div>
                       <div className="flex justify-between text-sm">
@@ -184,8 +186,8 @@ const VideoAnalysisPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="border rounded-lg p-4 bg-green-950/20 border-green-500/30">
-                  <h3 className="font-medium text-lg mb-2">Monthly Trend</h3>
+                <div className="border rounded-lg p-4 bg-green-950/30 border-green-500/30">
+                  <h3 className="font-medium text-lg mb-2 text-shadow">Monthly Trend</h3>
                   <div className="h-40 flex items-end justify-between gap-2">
                     {["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((month, index) => {
                       const height = [40, 65, 45, 80, 60, 30][index];
@@ -211,19 +213,19 @@ const VideoAnalysisPage: React.FC = () => {
                 <PotholeChatBot />
               </div>
               <div className="md:col-span-1">
-                <div className="bg-card p-6 rounded-lg border border-border h-full">
+                <div className="neo-card h-full">
                   <h3 className="text-xl font-bold mb-4 flex items-center gap-2 gradient-text">
                     <Bot className="h-5 w-5 text-primary" />
                     About AI Pothole Chat
                   </h3>
                   
                   <div className="space-y-4">
-                    <p>
+                    <p className="text-shadow">
                       Our AI assistant is powered by Cerebras AI and specialized in all things related to potholes 
                       and road damage. Feel free to ask questions about:
                     </p>
                     
-                    <ul className="list-disc pl-5 space-y-1">
+                    <ul className="list-disc pl-5 space-y-1 text-shadow">
                       <li>Causes and formation of potholes</li>
                       <li>Detection technologies and methods</li>
                       <li>Prevention and repair techniques</li>
@@ -231,10 +233,10 @@ const VideoAnalysisPage: React.FC = () => {
                       <li>Government policies and reporting systems</li>
                     </ul>
                     
-                    <Alert className="mt-4 bg-background border-border">
+                    <Alert className="mt-4 bg-background/80 border-border">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Integrated AI System</AlertTitle>
-                      <AlertDescription>
+                      <AlertTitle className="text-shadow">Integrated AI System</AlertTitle>
+                      <AlertDescription className="text-shadow">
                         This chatbot uses the same AI technology that powers our pothole detection system,
                         providing you with accurate and technical insights about road damage.
                       </AlertDescription>

@@ -45,14 +45,14 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
+    <header className="bg-background border-b border-border sticky top-0 z-50 shadow-sm">
       <div className="container flex items-center justify-between h-16 px-4">
         <div className="flex items-center gap-2">
           <div className="hidden md:block">
             <h1 className="text-xl font-bold text-primary flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-secondary" />
               <span>Road Eye</span>
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-normal">
+              <span className="text-xs bg-blue-900/50 text-blue-200 px-2 py-0.5 rounded-full font-normal">
                 India
               </span>
             </h1>
@@ -64,20 +64,20 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="border-r border-border">
+            <SheetContent side="left" className="border-r border-border bg-background">
               <div className="flex flex-col h-full">
                 <h2 className="text-xl font-bold mt-6 mb-6 text-primary flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-secondary" />
                   <span>Road Eye</span>
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-normal">
+                  <span className="text-xs bg-blue-900/50 text-blue-200 px-2 py-0.5 rounded-full font-normal">
                     India
                   </span>
                 </h2>
                 
-                <div className="border border-border rounded-md p-3 mb-6">
+                <div className="border border-border rounded-md p-3 mb-6 bg-card/80">
                   <div className="text-sm font-medium mb-1">Selected Region</div>
                   <select 
-                    className="w-full text-sm p-2 border rounded"
+                    className="w-full text-sm p-2 border rounded bg-background text-foreground border-border"
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
                   >
@@ -140,19 +140,19 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
             className="w-full"
           >
             <TabsList className="bg-muted/50 p-1">
-              <TabsTrigger value="map" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger value="map" className="data-[state=active]:bg-card data-[state=active]:shadow-sm text-foreground">
                 <MapPin className="h-4 w-4 mr-2" />
                 Road Map
               </TabsTrigger>
-              <TabsTrigger value="report" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger value="report" className="data-[state=active]:bg-card data-[state=active]:shadow-sm text-foreground">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 Report Pothole
               </TabsTrigger>
-              <TabsTrigger value="dashboard" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-card data-[state=active]:shadow-sm text-foreground">
                 <BarChart4 className="h-4 w-4 mr-2" /> 
                 Analytics
               </TabsTrigger>
-              <TabsTrigger value="video" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger value="video" className="data-[state=active]:bg-card data-[state=active]:shadow-sm text-foreground">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 Video Analysis
               </TabsTrigger>
@@ -170,12 +170,12 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                 <ChevronDown className="h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 bg-background/95 backdrop-blur-md border-border">
               {indianCities.map(city => (
                 <DropdownMenuItem 
                   key={city} 
                   onClick={() => setSelectedCity(city)}
-                  className={city === selectedCity ? "bg-muted" : ""}
+                  className={city === selectedCity ? "bg-muted text-foreground" : "text-foreground"}
                 >
                   {city}
                 </DropdownMenuItem>
@@ -200,32 +200,32 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>My Reports</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-md border-border">
+              <DropdownMenuItem className="text-foreground">Profile</DropdownMenuItem>
+              <DropdownMenuItem className="text-foreground">My Reports</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem className="text-foreground">Settings</DropdownMenuItem>
+              <DropdownMenuItem className="text-foreground">Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
       
       {/* Sub-header with India-specific information */}
-      <div className="bg-gradient-to-r from-orange-50 via-white to-green-50 py-1 px-4 text-xs border-t border-border hidden md:block">
+      <div className="bg-gradient-to-r from-orange-950/30 via-background/80 to-green-950/30 py-1 px-4 text-xs border-t border-border hidden md:block">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center">
-              <span className="font-medium mr-1">Active Regions:</span>
-              <span>28 States & 8 UTs</span>
+              <span className="font-medium mr-1 text-foreground">Active Regions:</span>
+              <span className="text-foreground">28 States & 8 UTs</span>
             </div>
             <div className="flex items-center">
-              <span className="font-medium mr-1">Road Network:</span>
-              <span>6.2 Million km</span>
+              <span className="font-medium mr-1 text-foreground">Road Network:</span>
+              <span className="text-foreground">6.2 Million km</span>
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <span className="font-medium">Current Focus:</span>
+            <span className="font-medium text-foreground">Current Focus:</span>
             <span className="text-primary">{selectedCity}</span>
           </div>
         </div>

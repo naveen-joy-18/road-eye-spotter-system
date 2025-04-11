@@ -116,24 +116,24 @@ const VideoAnalysisWithAlerts: React.FC = () => {
         />
       </div>
       <div className="lg:col-span-1">
-        <Card className="h-full bg-card">
-          <CardHeader className="pb-4">
+        <Card className="h-full bg-card/95 border-border shadow-lg">
+          <CardHeader className="pb-4 border-b border-border">
             <CardTitle className="text-lg">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-4 bg-muted">
-                  <TabsTrigger value="alerts" className="flex items-center">
+                <TabsList className="grid grid-cols-4 bg-muted/70">
+                  <TabsTrigger value="alerts" className="flex items-center text-foreground">
                     <Bell className="h-4 w-4 mr-2" />
                     Driver Alerts
                   </TabsTrigger>
-                  <TabsTrigger value="data" className="flex items-center">
+                  <TabsTrigger value="data" className="flex items-center text-foreground">
                     <Database className="h-4 w-4 mr-2" />
                     Data Management
                   </TabsTrigger>
-                  <TabsTrigger value="python" className="flex items-center">
+                  <TabsTrigger value="python" className="flex items-center text-foreground">
                     <Terminal className="h-4 w-4 mr-2" />
                     Python
                   </TabsTrigger>
-                  <TabsTrigger value="chat" className="flex items-center">
+                  <TabsTrigger value="chat" className="flex items-center text-foreground">
                     <Bot className="h-4 w-4 mr-2" />
                     Chat
                   </TabsTrigger>
@@ -141,7 +141,7 @@ const VideoAnalysisWithAlerts: React.FC = () => {
               </Tabs>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             <TabsContent value="alerts" className="mt-0">
               <DriverAlerts 
                 simulationActive={isSimulating} 
