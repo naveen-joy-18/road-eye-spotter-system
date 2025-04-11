@@ -197,3 +197,27 @@ button {
 main, article, section {
   @apply bg-background text-foreground;
 }
+
+/* Fix remaining white backgrounds in specific components */
+.bg-white, .bg-gray-50 {
+  @apply bg-card text-foreground;
+}
+
+.text-gray-500, .text-gray-400 {
+  @apply text-muted-foreground;
+}
+
+/* Fix border colors */
+.border {
+  @apply border-border;
+}
+
+/* Ensure consistent input styling */
+input, select, textarea {
+  @apply bg-card text-foreground border-border focus:ring-primary focus:border-primary;
+}
+
+/* Fix background colors on forms */
+form {
+  @apply bg-transparent;
+}

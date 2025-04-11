@@ -5,7 +5,8 @@ import { potholes } from '@/data/potholes';
 import { 
   Gauge, MapPin, Navigation, Search, Layers, 
   AlertCircle, LocateFixed, Eye, EyeOff, 
-  Route, Download, Compass, Info, MapPinOff, Calendar 
+  Route, Download, Compass, Info, MapPinOff, Calendar,
+  Cube3d
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -23,9 +24,20 @@ import { TrafficOverlay } from './map/TrafficOverlay';
 import { MapLegend } from './map/MapLegend';
 import { MapInfoPanel } from './map/MapInfoPanel';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
+import { generate3DMesh } from '@/services/meshGeneration';
 
 interface MapProps {
   googleMapsApiKey?: string;
+}
+
+interface GlobalPotholeHotspot {
+  id: string;
+  lat: number;
+  lng: number;
+  severity: string;
+  address: string;
+  reportedAt?: string;
+  status?: string;
 }
 
 const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
@@ -58,6 +70,9 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [speedLimit, setSpeedLimit] = useState<number>(60);
   const [showSpeedometer, setShowSpeedometer] = useState<boolean>(true);
   const [compassHeading, setCompassHeading] = useState<number>(0);
+  const [selectedPothole, setSelectedPothole] = useState<string | null>(null);
+  const [generating3D, setGenerating3D] = useState<boolean>(false);
+  const [meshUrl, setMeshUrl] = useState<string | null>(null);
   
   const [mapMarkers, setMapMarkers] = useState<any[]>([]);
   const loadingIntervalRef = useRef<number | null>(null);
@@ -79,7 +94,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     { name: "Jaipur", lat: 26.9124, lng: 75.7873, zoom: 12 }
   ];
 
-  const globalPotholeHotspots = [
+  const globalPotholeHotspots: GlobalPotholeHotspot[] = [
     { id: "usa-1", lat: 40.7128, lng: -74.0060, severity: "medium", address: "New York City, USA" },
     { id: "usa-2", lat: 34.0522, lng: -118.2437, severity: "high", address: "Los Angeles, USA" },
     { id: "uk-1", lat: 51.5074, lng: -0.1278, severity: "low", address: "London, UK" },
@@ -191,8 +206,9 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
           info: {
             severity: pothole.severity,
             address: pothole.address,
-            reportedAt: pothole.reportedAt || new Date().toISOString(),
-            status: pothole.status || 'active'
+            reportedAt: (pothole as any).reportedAt || new Date().toISOString(),
+            status: (pothole as any).status || 'active',
+            imageUrl: (pothole as any).imageUrl || "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Fly_Agaric_mushroom_05.jpg/576px-Fly_Agaric_mushroom_05.jpg"
           },
           visible: true
         };
@@ -328,6 +344,42 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     toast.success("Map data downloaded successfully!");
   };
 
+  const handleGenerate3DMesh = async (markerId: string) => {
+    try {
+      setSelectedPothole(markerId);
+      setGenerating3D(true);
+      
+      const marker = mapMarkers.find(m => m.id === markerId);
+      if (!marker) {
+        toast.error("Could not find selected pothole data");
+        setGenerating3D(false);
+        return;
+      }
+      
+      toast.info("Generating 3D model of pothole...", {
+        description: "This may take a few moments"
+      });
+      
+      const result = await generate3DMesh(marker.info.imageUrl);
+      
+      if (result.success) {
+        setMeshUrl(result.url);
+        toast.success("3D model generated successfully!", {
+          description: "View the 3D model in the visualization tab"
+        });
+      } else {
+        toast.error("Failed to generate 3D model", {
+          description: result.error || "Unknown error occurred"
+        });
+      }
+    } catch (error) {
+      console.error("3D generation error:", error);
+      toast.error("Failed to generate 3D model");
+    } finally {
+      setGenerating3D(false);
+    }
+  };
+
   if (!googleMapsApiKey) {
     return (
       <div className="p-4 border border-red-500 rounded-md bg-red-50 text-red-700">
@@ -457,9 +509,10 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                           left: `${50 + (marker.position.lng - position.longitude) * (mapRegion === "Global View" ? 2.5 : 50)}%`, 
                           top: `${50 - (marker.position.lat - position.latitude) * (mapRegion === "Global View" ? 5 : 50)}%`
                         }}
+                        onClick={() => setSelectedPothole(marker.id)}
                       >
                         <div 
-                          className={`rounded-full ${marker.isUser ? 'h-4 w-4 border-2 border-white animate-pulse' : 'h-3 w-3 animate-pulse-glow'}`}
+                          className={`rounded-full ${marker.isUser ? 'h-4 w-4 border-2 border-white animate-pulse' : 'h-3 w-3 animate-pulse-glow'} ${selectedPothole === marker.id ? 'ring-2 ring-white' : ''}`}
                           style={{ backgroundColor: marker.color }}
                         />
                       </div>
@@ -620,7 +673,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
         <TabsContent value="traffic" className="mt-4">
           <div className="neo-glass p-6 rounded-lg border border-blue-900/20 min-h-[400px] text-foreground">
             <h2 className="futuristic-heading text-2xl mb-4 text-gradient">TRAFFIC ANALYSIS DASHBOARD</h2>
-            <p className="elegant-text text-gray-400 mb-6">Analyze traffic patterns and congestion levels across the global road network</p>
+            <p className="elegant-text text-muted-foreground mb-6">Analyze traffic patterns and congestion levels across the global road network</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-card p-4 rounded-lg border border-border">
@@ -640,7 +693,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                     }}
                   ></div>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   {trafficDensity > 75 ? 'Heavy congestion detected' : 
                   trafficDensity > 50 ? 'Moderate traffic in major areas' : 
                   trafficDensity > 25 ? 'Light traffic conditions' : 'Free flowing traffic'}
@@ -704,7 +757,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
         <TabsContent value="stats" className="mt-4">
           <div className="neo-glass p-6 rounded-lg border border-blue-900/20 min-h-[400px]">
             <h2 className="futuristic-heading text-2xl mb-4 text-gradient">ROAD DAMAGE STATISTICS</h2>
-            <p className="elegant-text text-gray-400 mb-6">Comprehensive analytics of road surface damage across regions</p>
+            <p className="elegant-text text-muted-foreground mb-6">Comprehensive analytics of road surface damage across regions</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-card p-4 rounded-lg border border-border flex flex-col items-center">

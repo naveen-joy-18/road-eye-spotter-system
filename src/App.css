@@ -99,3 +99,48 @@ h2.subtitle {
 .neo-card {
   @apply bg-card/80 backdrop-blur-md border border-white/10 rounded-xl shadow-lg p-6;
 }
+
+/* Fix for additional white backgrounds */
+.bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+  @apply bg-card;
+}
+
+/* Fix for text colors on dark backgrounds */
+.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+  @apply text-foreground;
+}
+
+.text-gray-400, .text-gray-300 {
+  @apply text-muted-foreground;
+}
+
+/* 3D model viewer container */
+.model-viewer-container {
+  width: 100%;
+  height: 300px;
+  background: rgba(20, 22, 30, 0.7);
+  border-radius: var(--radius);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Floating 3D button */
+.float-3d-btn {
+  @apply bg-primary/80 hover:bg-primary text-white font-futuristic tracking-wide p-2 rounded-full
+  border border-blue-400/30 shadow-md transition-all duration-300 hover:shadow-lg hover:border-blue-400/50;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+/* 3D animation */
+@keyframes rotate3d {
+  0% { transform: rotate3d(0, 1, 0, 0deg); }
+  100% { transform: rotate3d(0, 1, 0, 360deg); }
+}
+
+.rotate-3d {
+  animation: rotate3d 10s linear infinite;
+}
