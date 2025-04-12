@@ -25,6 +25,7 @@ import { MapLegend } from './map/MapLegend';
 import { MapInfoPanel } from './map/MapInfoPanel';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { generate3DMesh } from '@/services/meshGeneration';
+import MapLayers from './map/MapLayers';
 
 interface MapProps {
   googleMapsApiKey?: string;
@@ -73,13 +74,14 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [selectedPothole, setSelectedPothole] = useState<string | null>(null);
   const [generating3D, setGenerating3D] = useState<boolean>(false);
   const [meshUrl, setMeshUrl] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   
   const [mapMarkers, setMapMarkers] = useState<any[]>([]);
   const loadingIntervalRef = useRef<number | null>(null);
   const compassIntervalRef = useRef<number | null>(null);
   
   const { isLoaded: mapsApiLoaded, loadError } = useGoogleMaps(googleMapsApiKey || '');
-  
+
   const indianCities = [
     { name: "Global View", lat: 20, lng: 0, zoom: 2 },
     { name: "All India", lat: 20.5937, lng: 78.9629, zoom: 5 },
@@ -380,6 +382,26 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    
+    toast.info(`Searching for "${searchTerm}"...`);
+    
+    setTimeout(() => {
+      const results = potholes.filter(p => 
+        p.address.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      if (results.length > 0) {
+        toast.success(`Found ${results.length} matching results`);
+        setSelectedPothole(results[0].id);
+      } else {
+        toast.error("No matching potholes found");
+      }
+    }, 1000);
+  };
+
   if (!googleMapsApiKey) {
     return (
       <div className="p-4 border border-red-500 rounded-md bg-red-50 text-red-700">
@@ -545,15 +567,19 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               roadQualityActive={roadQualityView}
             />
 
-            <div className="absolute top-4 left-4 w-64">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <input 
-                  type="text" 
-                  placeholder="Search global pothole database..." 
-                  className="glass-panel pl-8 pr-4 py-2 w-full rounded-md shadow-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-futuristic"
-                />
-              </div>
+            <div className="absolute top-4 left-4 w-64 z-20">
+              <form onSubmit={handleSearch}>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input 
+                    type="text" 
+                    placeholder="Search global pothole database..." 
+                    className="glass-panel pl-8 pr-4 py-2 w-full rounded-md shadow-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-futuristic text-foreground"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </form>
             </div>
 
             <div className="absolute bottom-20 left-4 right-4 neo-glass p-3 rounded-md">
@@ -595,12 +621,12 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               />
             )}
 
-            <div className="absolute top-16 left-4 neo-glass p-3 rounded-md shadow-md">
+            <div className="absolute top-16 left-4 neo-glass p-3 rounded-md shadow-md z-20">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full justify-start neo-glass font-futuristic">
                     <MapPin className="h-4 w-4 mr-2" />
-                    <span>{mapRegion}</span>
+                    <span className="text-foreground">{mapRegion}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="p-0 w-48 neo-glass">
@@ -610,7 +636,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                         key={city.name}
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-left font-futuristic tracking-wide"
+                        className="w-full justify-start text-left font-futuristic tracking-wide text-foreground"
                         onClick={() => handleRegionChange(city.name)}
                       >
                         {city.name}
@@ -621,59 +647,12 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               </Popover>
             </div>
 
-            <div className="absolute top-32 right-4 neo-glass p-3 rounded-md shadow-md">
-              <h4 className="font-futuristic text-sm mb-2 tracking-wide">Map Layers</h4>
-              <div className="space-y-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={cn(
-                    "w-full justify-start font-futuristic",
-                    visibleLayers.potholes ? "text-primary" : "text-muted-foreground"
-                  )}
-                  onClick={() => toggleLayer('potholes')}
-                >
-                  <MapPin className={cn("h-4 w-4 mr-2", !visibleLayers.potholes && "opacity-50")} />
-                  Potholes
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={cn(
-                    "w-full justify-start font-futuristic",
-                    visibleLayers.traffic ? "text-primary" : "text-muted-foreground"
-                  )}
-                  onClick={() => toggleLayer('traffic')}
-                >
-                  <Route className={cn("h-4 w-4 mr-2", !visibleLayers.traffic && "opacity-50")} />
-                  Traffic
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={cn(
-                    "w-full justify-start font-futuristic",
-                    visibleLayers.roadQuality ? "text-primary" : "text-muted-foreground"
-                  )}
-                  onClick={() => toggleRoadQualityView()}
-                >
-                  <AlertCircle className={cn("h-4 w-4 mr-2", !visibleLayers.roadQuality && "opacity-50")} />
-                  Road Quality
-                </Button>
-              </div>
-              
-              <div className="mt-2 pt-2 border-t border-border">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full mt-1 neo-glass font-futuristic"
-                  onClick={downloadMapData}
-                >
-                  <Download className="h-3 w-3 mr-1" />
-                  Export Data
-                </Button>
-              </div>
-            </div>
+            <MapLayers 
+              visibleLayers={visibleLayers}
+              toggleLayer={toggleLayer}
+              toggleRoadQualityView={toggleRoadQualityView}
+              downloadMapData={downloadMapData}
+            />
 
             <div className="absolute top-4 right-20 neo-glass px-2 py-1 rounded text-xs flex items-center font-futuristic">
               <Calendar className="h-3 w-3 mr-1" />
@@ -698,7 +677,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
                 </div>
                 <div className="h-8 bg-muted rounded-full mt-2 overflow-hidden">
                   <div 
-                    className="h-full rounded-full transition-all duration-500"
+                    className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ 
                       width: `${trafficDensity}%`,
                       backgroundColor: trafficDensity > 75 ? '#ef4444' : 

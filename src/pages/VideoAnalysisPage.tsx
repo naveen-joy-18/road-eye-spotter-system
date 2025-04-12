@@ -54,22 +54,24 @@ const VideoAnalysisPage: React.FC = () => {
       <div className="container mx-auto py-6">
         <Tabs defaultValue="video" value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-5 bg-muted">
-            <TabsTrigger value="video">Video Analysis</TabsTrigger>
-            <TabsTrigger value="map">Map</TabsTrigger>
-            <TabsTrigger value="report">Report</TabsTrigger>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="chat" className="flex items-center gap-1">
-              <MessageCircle className="h-4 w-4" />
-              AI Chat
+            <TabsTrigger value="video" className="text-xs md:text-sm whitespace-nowrap px-2 md:px-4">Video Analysis</TabsTrigger>
+            <TabsTrigger value="map" className="text-xs md:text-sm whitespace-nowrap px-2 md:px-4">Map</TabsTrigger>
+            <TabsTrigger value="report" className="text-xs md:text-sm whitespace-nowrap px-2 md:px-4">Report</TabsTrigger>
+            <TabsTrigger value="dashboard" className="text-xs md:text-sm whitespace-nowrap px-2 md:px-4">Dashboard</TabsTrigger>
+            <TabsTrigger value="chat" className="text-xs md:text-sm whitespace-nowrap px-2 md:px-4 flex items-center justify-center gap-1">
+              <MessageCircle className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden md:inline">AI Chat</span>
+              <span className="inline md:hidden">Chat</span>
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="video" className="mt-4 animate-in fade-in-50">
             <div className="mb-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gradient">Road Condition Video Analysis</h2>
+              <h2 className="text-lg md:text-2xl font-bold text-gradient">Road Condition Video Analysis</h2>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => toast.info("Documentation opened in new tab")}>
-                  Help Guide
+                  <span className="hidden md:inline">Help Guide</span>
+                  <span className="inline md:hidden">Help</span>
                 </Button>
                 <Button onClick={() => toast.success("Analysis settings saved")}>
                   Settings

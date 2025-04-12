@@ -69,6 +69,7 @@
   backdrop-filter: blur(10px);
   border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 /* Force dark backgrounds throughout the application */
@@ -261,4 +262,75 @@ header *, .header * {
 /* Ensure buttons have visible text */
 button, .btn, [type="button"] {
   @apply text-foreground !important;
+}
+
+/* Ensure that popover content is always visible */
+[data-radix-popper-content-wrapper] {
+  z-index: 100 !important;
+}
+
+/* Fix for overlapping text in tab triggers */
+[role="tablist"] [role="tab"] {
+  @apply truncate text-ellipsis overflow-hidden;
+  white-space: nowrap;
+}
+
+/* Fix map overlay stacking issues */
+.map-overlay-item {
+  z-index: 30;
+}
+
+/* Ensure all inputs are visible */
+input, textarea, select {
+  @apply text-foreground bg-background border-border;
+  color: var(--foreground) !important;
+}
+
+/* Animation for pulse effect */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 5px currentColor; }
+  50% { opacity: 0.7; box-shadow: 0 0 10px currentColor; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Fix z-index for map controls */
+.map-controls {
+  z-index: 40 !important;
+}
+
+/* Fix tab content overlapping */
+.tab-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure all buttons show their text */
+button span, 
+button div,
+[role="tab"] span {
+  color: inherit !important;
+}
+
+/* Fix tab content background */
+[role="tabpanel"] {
+  background-color: var(--background) !important;
+}
+
+/* Fix nested menus z-index */
+.nested-menu {
+  z-index: 45 !important;
+}
+
+/* Fix video analysis tabs */
+.video-analysis-tabs [role="tablist"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+}
+
+.video-analysis-tabs [role="tab"] {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.25rem;
 }

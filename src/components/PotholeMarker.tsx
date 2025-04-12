@@ -71,7 +71,7 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
             </div>
             <Badge
               variant={pothole.status === 'resolved' ? 'default' : 'outline'}
-              className={pothole.status === 'resolved' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}
+              className={pothole.status === 'resolved' ? 'bg-green-500 hover:bg-green-600 text-white' : 'text-foreground'}
             >
               {statusLabel[pothole.status]}
             </Badge>

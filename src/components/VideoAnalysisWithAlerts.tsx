@@ -121,21 +121,21 @@ const VideoAnalysisWithAlerts: React.FC = () => {
             <CardTitle className="text-lg">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid grid-cols-4 bg-muted/70">
-                  <TabsTrigger value="alerts" className="flex items-center text-foreground">
-                    <Bell className="h-4 w-4 mr-2" />
-                    Driver Alerts
+                  <TabsTrigger value="alerts" className="flex flex-col md:flex-row items-center text-foreground text-xs whitespace-nowrap px-1 md:px-2">
+                    <Bell className="h-3 w-3 mr-0 md:mr-1 mb-1 md:mb-0" />
+                    <span className="truncate">Alerts</span>
                   </TabsTrigger>
-                  <TabsTrigger value="data" className="flex items-center text-foreground">
-                    <Database className="h-4 w-4 mr-2" />
-                    Data Management
+                  <TabsTrigger value="data" className="flex flex-col md:flex-row items-center text-foreground text-xs whitespace-nowrap px-1 md:px-2">
+                    <Database className="h-3 w-3 mr-0 md:mr-1 mb-1 md:mb-0" />
+                    <span className="truncate">Data</span>
                   </TabsTrigger>
-                  <TabsTrigger value="python" className="flex items-center text-foreground">
-                    <Terminal className="h-4 w-4 mr-2" />
-                    Python
+                  <TabsTrigger value="python" className="flex flex-col md:flex-row items-center text-foreground text-xs whitespace-nowrap px-1 md:px-2">
+                    <Terminal className="h-3 w-3 mr-0 md:mr-1 mb-1 md:mb-0" />
+                    <span className="truncate">Python</span>
                   </TabsTrigger>
-                  <TabsTrigger value="chat" className="flex items-center text-foreground">
-                    <Bot className="h-4 w-4 mr-2" />
-                    Chat
+                  <TabsTrigger value="chat" className="flex flex-col md:flex-row items-center text-foreground text-xs whitespace-nowrap px-1 md:px-2">
+                    <Bot className="h-3 w-3 mr-0 md:mr-1 mb-1 md:mb-0" />
+                    <span className="truncate">Chat</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
