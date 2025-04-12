@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Pothole } from '@/types';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ThumbsUp } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -18,6 +18,8 @@ interface PotholeMarkerProps {
 
 const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [upvoted, setUpvoted] = useState(false);
+  const [localUpvotes, setLocalUpvotes] = useState(pothole.upvotes);
 
   // Map severity to appropriate colors
   const severityColor = {
@@ -39,7 +41,15 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
 
   const handleUpvote = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toast.success(`Upvoted pothole at ${pothole.address}`);
+    
+    if (!upvoted) {
+      setUpvoted(true);
+      setLocalUpvotes(prev => prev + 1);
+      pothole.upvotes += 1; // Update the actual pothole object
+      toast.success(`Upvoted pothole at ${pothole.address}`);
+    } else {
+      toast.info("You've already upvoted this pothole");
+    }
   };
 
   return (
@@ -95,9 +105,15 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
               </Badge>
               <button 
                 onClick={handleUpvote}
-                className="text-xs bg-muted/60 hover:bg-muted px-2 py-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                className={cn(
+                  "text-xs px-2 py-1 rounded flex items-center gap-1",
+                  upvoted 
+                    ? "bg-primary/20 text-primary" 
+                    : "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                )}
               >
-                {pothole.upvotes} upvotes
+                <ThumbsUp className="h-3 w-3" />
+                {localUpvotes}
               </button>
             </div>
           </div>

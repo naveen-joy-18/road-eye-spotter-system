@@ -30,6 +30,20 @@ const MapLayers: React.FC<MapLayersProps> = ({
     });
   };
 
+  const handleLayerToggle = (layer: 'potholes' | 'traffic' | 'roadQuality' | 'construction') => {
+    toggleLayer(layer);
+    
+    const layerNames = {
+      potholes: "Potholes",
+      traffic: "Traffic",
+      roadQuality: "Road Quality",
+      construction: "Construction"
+    };
+    
+    const newState = !visibleLayers[layer];
+    toast.info(`${newState ? 'Showing' : 'Hidden'} ${layerNames[layer]} layer`);
+  };
+
   return (
     <div className="absolute top-32 right-4 neo-glass p-3 rounded-md shadow-md z-10">
       <h4 className="font-futuristic text-sm mb-2 tracking-wide text-foreground">Map Layers</h4>
@@ -41,7 +55,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
             "w-full justify-start font-futuristic",
             visibleLayers.potholes ? "text-primary" : "text-muted-foreground"
           )}
-          onClick={() => toggleLayer('potholes')}
+          onClick={() => handleLayerToggle('potholes')}
         >
           <MapPin className={cn("h-4 w-4 mr-2", !visibleLayers.potholes && "opacity-50")} />
           Potholes
@@ -53,7 +67,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
             "w-full justify-start font-futuristic",
             visibleLayers.traffic ? "text-primary" : "text-muted-foreground"
           )}
-          onClick={() => toggleLayer('traffic')}
+          onClick={() => handleLayerToggle('traffic')}
         >
           <Route className={cn("h-4 w-4 mr-2", !visibleLayers.traffic && "opacity-50")} />
           Traffic
@@ -77,7 +91,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
             "w-full justify-start font-futuristic",
             visibleLayers.construction ? "text-primary" : "text-muted-foreground"
           )}
-          onClick={() => toggleLayer('construction')}
+          onClick={() => handleLayerToggle('construction')}
         >
           <Construction className={cn("h-4 w-4 mr-2", !visibleLayers.construction && "opacity-50")} />
           Construction

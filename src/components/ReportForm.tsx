@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { PotholeFormData, Severity } from '@/types';
+import { PotholeFormData, Severity, Pothole } from '@/types';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Camera, MapPin, Upload, X } from 'lucide-react';
+import { potholes } from '@/data/potholes';
 
 const ReportForm: React.FC = () => {
   const [formData, setFormData] = useState<PotholeFormData>({
@@ -88,21 +89,44 @@ const ReportForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      console.log('Submitted form data:', formData);
-      toast.success('Pothole reported successfully!');
-      setFormData({
-        latitude: 0,
-        longitude: 0,
-        address: '',
-        severity: 'medium',
-        description: '',
-        image: null
-      });
-      setPreviewUrl(null);
-      setIsSubmitting(false);
-    }, 1500);
+    // Create a new pothole object
+    const newPothole: Pothole = {
+      id: `${potholes.length + 1}`,
+      latitude: formData.latitude || 37.7749 + (Math.random() - 0.5) * 0.1,
+      longitude: formData.longitude || -122.4194 + (Math.random() - 0.5) * 0.1,
+      address: formData.address || 'Unknown address',
+      severity: formData.severity,
+      status: 'reported',
+      reportedAt: new Date().toISOString(),
+      updatedAt: null,
+      description: formData.description || 'No description provided',
+      imageUrl: previewUrl || '/placeholder.svg',
+      reporter: 'anonymous@example.com',
+      upvotes: 0
+    };
+    
+    // Add the new pothole to the potholes array
+    potholes.unshift(newPothole);
+    
+    console.log('Submitted form data:', formData);
+    console.log('New pothole added:', newPothole);
+    console.log('Updated potholes array:', potholes);
+    
+    toast.success('Pothole reported successfully!', {
+      description: `Your report for ${formData.address} has been submitted.`
+    });
+    
+    // Reset form
+    setFormData({
+      latitude: 0,
+      longitude: 0,
+      address: '',
+      severity: 'medium',
+      description: '',
+      image: null
+    });
+    setPreviewUrl(null);
+    setIsSubmitting(false);
   };
 
   return (
