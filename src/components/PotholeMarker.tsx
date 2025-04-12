@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface PotholeMarkerProps {
   pothole: Pothole;
@@ -36,12 +37,17 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
   const leftPosition = position?.left || `${Math.random() * 80 + 10}%`;
   const topPosition = position?.top || `${Math.random() * 80 + 10}%`;
 
+  const handleUpvote = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast.success(`Upvoted pothole at ${pothole.address}`);
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <button 
           className={cn(
-            "absolute z-30 -translate-x-1/2 -translate-y-1/2 group",
+            "absolute z-10 -translate-x-1/2 -translate-y-1/2 group",
             severityColor[pothole.severity]
           )}
           style={{ 
@@ -87,9 +93,12 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
               )}>
                 {pothole.severity.charAt(0).toUpperCase() + pothole.severity.slice(1)} Severity
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <button 
+                onClick={handleUpvote}
+                className="text-xs bg-muted/60 hover:bg-muted px-2 py-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+              >
                 {pothole.upvotes} upvotes
-              </span>
+              </button>
             </div>
           </div>
         </div>

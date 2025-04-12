@@ -32,9 +32,13 @@ const VideoAnalysisWithAlerts: React.FC = () => {
       toast.info("Driver alert system activated", {
         description: "Voice alerts will play when potholes are detected"
       });
+      
+      // Switch to alerts tab when simulation starts
+      setActiveTab('alerts');
     } else {
       toast.info("Driver alert system deactivated");
       setCurrentAlert(null);
+      cancelSpeech();
       
       // Clear any pending timers
       if (alertTimerRef.current) {
@@ -69,6 +73,9 @@ const VideoAnalysisWithAlerts: React.FC = () => {
     
     setCurrentAlert({ message, severity: detection.severity });
     speakAlertWithSeverity(message, detection.severity);
+    
+    // Auto-switch to alerts tab when detection happens
+    setActiveTab('alerts');
   };
   
   // Process alerts when they change
@@ -103,8 +110,33 @@ const VideoAnalysisWithAlerts: React.FC = () => {
         window.clearTimeout(alertTimerRef.current);
         alertTimerRef.current = null;
       }
+      
+      // Make sure to cancel any ongoing speech when component unmounts
+      cancelSpeech();
     };
   }, []);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    
+    if (tab === 'data' && isSimulating) {
+      toast.info("Data collection active", { 
+        description: "Recording metrics from current analysis session"
+      });
+    }
+    
+    if (tab === 'python' && isSimulating) {
+      toast.info("Python backend connected", { 
+        description: "View real-time processing information"
+      });
+    }
+    
+    if (tab === 'chat') {
+      toast.info("AI Assistant activated", { 
+        description: "Ask questions about potholes and road conditions"
+      });
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -119,7 +151,7 @@ const VideoAnalysisWithAlerts: React.FC = () => {
         <Card className="h-full bg-card/95 border-border shadow-lg">
           <CardHeader className="pb-4 border-b border-border">
             <CardTitle className="text-lg">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="grid grid-cols-4 bg-muted/70">
                   <TabsTrigger value="alerts" className="flex flex-col md:flex-row items-center text-foreground text-xs whitespace-nowrap px-1 md:px-2">
                     <Bell className="h-3 w-3 mr-0 md:mr-1 mb-1 md:mb-0" />

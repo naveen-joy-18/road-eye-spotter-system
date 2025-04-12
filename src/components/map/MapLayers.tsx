@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { MapPin, Route, AlertCircle, Download } from 'lucide-react';
+import { MapPin, Route, AlertCircle, Download, Construction } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface MapLayersProps {
   visibleLayers: {
@@ -22,8 +23,15 @@ const MapLayers: React.FC<MapLayersProps> = ({
   toggleRoadQualityView, 
   downloadMapData 
 }) => {
+  const handleDownload = () => {
+    downloadMapData();
+    toast.success("Map data exported successfully", {
+      description: "Downloaded to your local downloads folder"
+    });
+  };
+
   return (
-    <div className="absolute top-32 right-4 neo-glass p-3 rounded-md shadow-md z-30">
+    <div className="absolute top-32 right-4 neo-glass p-3 rounded-md shadow-md z-10">
       <h4 className="font-futuristic text-sm mb-2 tracking-wide text-foreground">Map Layers</h4>
       <div className="space-y-2">
         <Button 
@@ -62,6 +70,18 @@ const MapLayers: React.FC<MapLayersProps> = ({
           <AlertCircle className={cn("h-4 w-4 mr-2", !visibleLayers.roadQuality && "opacity-50")} />
           Road Quality
         </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={cn(
+            "w-full justify-start font-futuristic",
+            visibleLayers.construction ? "text-primary" : "text-muted-foreground"
+          )}
+          onClick={() => toggleLayer('construction')}
+        >
+          <Construction className={cn("h-4 w-4 mr-2", !visibleLayers.construction && "opacity-50")} />
+          Construction
+        </Button>
       </div>
       
       <div className="mt-2 pt-2 border-t border-border">
@@ -69,7 +89,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
           variant="outline" 
           size="sm" 
           className="w-full mt-1 neo-glass font-futuristic"
-          onClick={downloadMapData}
+          onClick={handleDownload}
         >
           <Download className="h-3 w-3 mr-1" />
           Export Data
