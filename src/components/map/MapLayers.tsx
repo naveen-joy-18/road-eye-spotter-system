@@ -1,9 +1,16 @@
 
 import React from 'react';
-import { MapPin, Route, AlertCircle, Download, Construction } from 'lucide-react';
+import { MapPin, Route, AlertCircle, Download, Construction, Map as MapIcon, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface MapLayersProps {
   visibleLayers: {
@@ -15,13 +22,17 @@ interface MapLayersProps {
   toggleLayer: (layer: 'potholes' | 'traffic' | 'roadQuality' | 'construction') => void;
   toggleRoadQualityView: () => void;
   downloadMapData: () => void;
+  mapStyle?: string;
+  setMapStyle?: (style: string) => void;
 }
 
 const MapLayers: React.FC<MapLayersProps> = ({ 
   visibleLayers, 
   toggleLayer, 
   toggleRoadQualityView, 
-  downloadMapData 
+  downloadMapData,
+  mapStyle = 'streets',
+  setMapStyle = () => {}
 }) => {
   const handleDownload = () => {
     downloadMapData();
@@ -44,9 +55,27 @@ const MapLayers: React.FC<MapLayersProps> = ({
     toast.info(`${newState ? 'Showing' : 'Hidden'} ${layerNames[layer]} layer`);
   };
 
+  const handleMapStyleChange = (value: string) => {
+    setMapStyle(value);
+    toast.success(`Map style changed to ${value.charAt(0).toUpperCase() + value.slice(1)}`);
+  };
+
   return (
     <div className="absolute top-32 right-4 neo-glass p-3 rounded-md shadow-md z-10">
-      <h4 className="font-futuristic text-sm mb-2 tracking-wide text-foreground">Map Layers</h4>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="font-futuristic text-sm tracking-wide text-foreground">Map Layers</h4>
+        <Select value={mapStyle} onValueChange={handleMapStyleChange}>
+          <SelectTrigger className="w-24 h-7 text-xs">
+            <SelectValue placeholder="Map Style" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="streets">Streets</SelectItem>
+            <SelectItem value="satellite">Satellite</SelectItem>
+            <SelectItem value="hybrid">Hybrid</SelectItem>
+            <SelectItem value="dark">Dark</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="space-y-2">
         <Button 
           variant="ghost" 
@@ -58,7 +87,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
           onClick={() => handleLayerToggle('potholes')}
         >
           <MapPin className={cn("h-4 w-4 mr-2", !visibleLayers.potholes && "opacity-50")} />
-          Potholes
+          Potholes {visibleLayers.potholes && <span className="ml-auto text-xs bg-green-600/20 text-green-600 px-1.5 rounded">ON</span>}
         </Button>
         <Button 
           variant="ghost" 
@@ -70,7 +99,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
           onClick={() => handleLayerToggle('traffic')}
         >
           <Route className={cn("h-4 w-4 mr-2", !visibleLayers.traffic && "opacity-50")} />
-          Traffic
+          Traffic {visibleLayers.traffic && <span className="ml-auto text-xs bg-blue-600/20 text-blue-600 px-1.5 rounded">ON</span>}
         </Button>
         <Button 
           variant="ghost" 
@@ -82,7 +111,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
           onClick={() => toggleRoadQualityView()}
         >
           <AlertCircle className={cn("h-4 w-4 mr-2", !visibleLayers.roadQuality && "opacity-50")} />
-          Road Quality
+          Road Quality {visibleLayers.roadQuality && <span className="ml-auto text-xs bg-yellow-600/20 text-yellow-600 px-1.5 rounded">ON</span>}
         </Button>
         <Button 
           variant="ghost" 
@@ -94,7 +123,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
           onClick={() => handleLayerToggle('construction')}
         >
           <Construction className={cn("h-4 w-4 mr-2", !visibleLayers.construction && "opacity-50")} />
-          Construction
+          Construction {visibleLayers.construction && <span className="ml-auto text-xs bg-orange-600/20 text-orange-600 px-1.5 rounded">ON</span>}
         </Button>
       </div>
       

@@ -19,7 +19,12 @@ export type PotholeDetection = {
   pixelCoordinates: { x1: number; y1: number; x2: number; y2: number };
   surfaceDamageEstimate: number; // percentage of surface damaged
   depthEstimate: number; // estimated depth in cm
-  detectionAlgorithm: 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet';
+  detectionAlgorithm: 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet' | 'SIFT' | 'PotholeNet';
+  impactForce?: number; // estimated impact force in Newtons
+  roadType?: string; // type of road (concrete, asphalt, etc)
+  weatherConditions?: string; // current weather conditions
+  timeToRepair?: number; // estimated time to repair in days
+  vehicleRiskLevel?: number; // risk level for vehicles (1-10)
 };
 
 // Indian city/location names for simulation
@@ -36,11 +41,33 @@ const INDIAN_LOCATIONS = [
   "MG Marg, Gangtok"
 ];
 
+// Road types for simulation
+const ROAD_TYPES = [
+  "Asphalt",
+  "Concrete",
+  "Bitumen",
+  "WBM (Water Bound Macadam)",
+  "Gravel",
+  "PMGSY Standard"
+];
+
+// Weather conditions for simulation
+const WEATHER_CONDITIONS = [
+  "Clear",
+  "Rainy",
+  "Post-rain",
+  "Humid",
+  "Hot",
+  "Monsoon"
+];
+
 // Detection algorithms with weights (some more likely than others)
 const DETECTION_ALGORITHMS = [
-  { name: 'YOLOv5', weight: 0.6 },
-  { name: 'Faster R-CNN', weight: 0.3 },
-  { name: 'EfficientDet', weight: 0.1 }
+  { name: 'YOLOv5', weight: 0.4 },
+  { name: 'Faster R-CNN', weight: 0.2 },
+  { name: 'EfficientDet', weight: 0.1 },
+  { name: 'SIFT', weight: 0.1 },
+  { name: 'PotholeNet', weight: 0.2 }
 ];
 
 // Specific locations with higher pothole probabilities (for more realistic patterns)
@@ -90,7 +117,7 @@ export const simulateVideoProcessing = (videoUrl: string, options: {
       memoryUsage: 800 + Math.sin(progress / 5) * 200, // Memory usage fluctuates
       tensorflowStatus: 'Running',
       gpuUtilization: Math.min(100, 60 + Math.sin(progress / 7) * 20), // GPU usage between 40-80%
-      modelName: 'PotholeNet-v3.4',
+      modelName: getRandomModelName(),
       detectionEvents: Math.floor(progress / 10)
     };
     
@@ -105,7 +132,7 @@ export const simulateVideoProcessing = (videoUrl: string, options: {
       
       // Simulate logs that would come from Python
       console.log(`[Python Backend] Detected ${detections.length} potholes`);
-      console.log('[Python Backend] Model inference complete: PotholeNet-v3.4');
+      console.log('[Python Backend] Model inference complete: ' + stats.modelName);
       console.log('[Python Backend] Accuracy metrics: Precision: 0.91, Recall: 0.87, F1-Score: 0.89');
       
       options.onComplete(detections);
@@ -114,7 +141,7 @@ export const simulateVideoProcessing = (videoUrl: string, options: {
   
   // Simulate Python backend log messages
   console.log(`[Python Backend] Starting video processing on ${videoUrl}`);
-  console.log('[Python Backend] Loading TensorFlow model: PotholeNet-v3.4');
+  console.log('[Python Backend] Loading TensorFlow model: ' + getRandomModelName());
   console.log('[Python Backend] GPU acceleration enabled');
   console.log('[Python Backend] Processing with sensitivity level:', options.sensitivityLevel);
 
@@ -126,6 +153,17 @@ export const simulateVideoProcessing = (videoUrl: string, options: {
     }
   };
 };
+
+function getRandomModelName() {
+  const models = [
+    "PotholeNet-v3.4",
+    "RoadDamageDetector-v2.1",
+    "YOLO-Pothole-v4.5",
+    "InfraSense-v1.2",
+    "UrbanRoad-QualityNet"
+  ];
+  return models[Math.floor(Math.random() * models.length)];
+}
 
 export interface ProcessingStats {
   framesProcessed: number;
@@ -170,13 +208,13 @@ const generateRealisticDetections = (videoUrl: string): PotholeDetection[] => {
     demoDetections.forEach((demo, i) => {
       // Select algorithm using weighted random
       const algorithmRand = Math.random();
-      let algorithm: 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet' = 'YOLOv5';
+      let algorithm: 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet' | 'SIFT' | 'PotholeNet' = 'YOLOv5';
       let cumWeight = 0;
       
       for (const alg of DETECTION_ALGORITHMS) {
         cumWeight += alg.weight;
         if (algorithmRand <= cumWeight) {
-          algorithm = alg.name as 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet';
+          algorithm = alg.name as 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet' | 'SIFT' | 'PotholeNet';
           break;
         }
       }
@@ -202,7 +240,12 @@ const generateRealisticDetections = (videoUrl: string): PotholeDetection[] => {
         },
         surfaceDamageEstimate: Math.floor(Math.random() * 30) + 10,
         depthEstimate: Math.floor(Math.random() * 10) + 1,
-        detectionAlgorithm: algorithm
+        detectionAlgorithm: algorithm,
+        impactForce: Math.floor(Math.random() * 1000) + 500,
+        roadType: ROAD_TYPES[Math.floor(Math.random() * ROAD_TYPES.length)],
+        weatherConditions: WEATHER_CONDITIONS[Math.floor(Math.random() * WEATHER_CONDITIONS.length)],
+        timeToRepair: Math.floor(Math.random() * 30) + 1,
+        vehicleRiskLevel: Math.floor(Math.random() * 10) + 1
       });
     });
   } else {
@@ -234,13 +277,13 @@ const generateRealisticDetections = (videoUrl: string): PotholeDetection[] => {
       
       // Select algorithm using weighted random
       const algorithmRand = Math.random();
-      let algorithm: 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet' = 'YOLOv5';
+      let algorithm: 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet' | 'SIFT' | 'PotholeNet' = 'YOLOv5';
       let cumWeight = 0;
       
       for (const alg of DETECTION_ALGORITHMS) {
         cumWeight += alg.weight;
         if (algorithmRand <= cumWeight) {
-          algorithm = alg.name as 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet';
+          algorithm = alg.name as 'YOLOv5' | 'Faster R-CNN' | 'EfficientDet' | 'SIFT' | 'PotholeNet';
           break;
         }
       }
@@ -270,7 +313,12 @@ const generateRealisticDetections = (videoUrl: string): PotholeDetection[] => {
         },
         surfaceDamageEstimate: Math.floor(Math.random() * 30) + 10,
         depthEstimate: Math.floor(Math.random() * 10) + 1,
-        detectionAlgorithm: algorithm
+        detectionAlgorithm: algorithm,
+        impactForce: Math.floor(Math.random() * 1000) + 500,
+        roadType: ROAD_TYPES[Math.floor(Math.random() * ROAD_TYPES.length)],
+        weatherConditions: WEATHER_CONDITIONS[Math.floor(Math.random() * WEATHER_CONDITIONS.length)],
+        timeToRepair: Math.floor(Math.random() * 30) + 1,
+        vehicleRiskLevel: Math.floor(Math.random() * 10) + 1
       });
     }
   }
@@ -300,6 +348,8 @@ export const simulateRealTimeAnalysis = (
       console.log(`[Python Backend] Detection event at ${currentTime.toFixed(2)}s - ${detection.severity} pothole`);
       console.log(`[Python Backend] Detection confidence: ${(detection.confidence * 100).toFixed(1)}%`);
       console.log(`[Python Backend] Algorithm used: ${detection.detectionAlgorithm}`);
+      console.log(`[Python Backend] Road type: ${detection.roadType}, Weather: ${detection.weatherConditions}`);
+      console.log(`[Python Backend] Vehicle risk level: ${detection.vehicleRiskLevel}/10`);
       onDetection(detection);
     });
   }
@@ -318,8 +368,15 @@ export const generatePythonConsoleOutput = (progress: number): string => {
     "[INFO] Detection confidence threshold: {threshold}%",
     "[DEBUG] Model inference time: {time}ms per frame",
     "[INFO] Road surface analysis complete for segment {segment}",
-    "[DEBUG] Running non-maximum suppression on detections"
+    "[DEBUG] Running non-maximum suppression on detections",
+    "[INFO] Found {pothole_count} potential road anomalies",
+    "[DEBUG] Applying texture analysis to frame {frame_num}",
+    "[INFO] Weather condition detected: {weather}",
+    "[DEBUG] Road type classification: {road_type}"
   ];
+  
+  const weathers = ["Clear", "Rainy", "Overcast", "Sunny", "Post-rain"];
+  const roadTypes = ["Asphalt", "Concrete", "Bitumen", "Gravel", "WBM"];
   
   // Select a random output format and fill in the variables
   const output = outputs[Math.floor(Math.random() * outputs.length)]
@@ -328,7 +385,10 @@ export const generatePythonConsoleOutput = (progress: number): string => {
     .replace("{memory}", (800 + Math.random() * 200).toFixed(1))
     .replace("{threshold}", (65 + Math.random() * 10).toFixed(1))
     .replace("{time}", (15 + Math.random() * 10).toFixed(1))
-    .replace("{segment}", Math.floor(progress / 10).toString());
+    .replace("{segment}", Math.floor(progress / 10).toString())
+    .replace("{pothole_count}", (Math.floor(Math.random() * 5) + 1).toString())
+    .replace("{weather}", weathers[Math.floor(Math.random() * weathers.length)])
+    .replace("{road_type}", roadTypes[Math.floor(Math.random() * roadTypes.length)]);
     
   return output;
 };
@@ -338,7 +398,7 @@ export const generatePythonConsoleOutput = (progress: number): string => {
  */
 export const generatePythonTerminalOutput = (frameCount: number): string[] => {
   const outputs = [
-    `[Frame ${frameCount}] Processing with YOLOv5...`,
+    `[Frame ${frameCount}] Processing with ${DETECTION_ALGORITHMS[Math.floor(Math.random() * DETECTION_ALGORITHMS.length)].name}...`,
     `[INFO] Detected objects: ${Math.floor(Math.random() * 3)}`,
     `[DEBUG] Inference time: ${(15 + Math.random() * 10).toFixed(1)}ms`,
     `[INFO] Applying spatial filtering to detections`,
@@ -347,7 +407,14 @@ export const generatePythonTerminalOutput = (frameCount: number): string[] => {
     `[DEBUG] Batch size: 16, Processing efficiency: ${(85 + Math.random() * 10).toFixed(1)}%`,
     `[INFO] Running feature extraction on frame regions...`,
     `[DEBUG] TensorFlow operations dispatched to GPU`,
-    `[WARN] Low confidence detection filtered: ${(30 + Math.random() * 20).toFixed(1)}%`
+    `[WARN] Low confidence detection filtered: ${(30 + Math.random() * 20).toFixed(1)}%`,
+    `[INFO] Surface texture analysis: ${(Math.random() * 100).toFixed(1)} roughness index`,
+    `[DEBUG] Calculating pothole depth using stereo vision: ${(Math.random() * 10).toFixed(1)}cm`,
+    `[INFO] Weather condition detected: ${WEATHER_CONDITIONS[Math.floor(Math.random() * WEATHER_CONDITIONS.length)]}`,
+    `[DEBUG] Road type detected: ${ROAD_TYPES[Math.floor(Math.random() * ROAD_TYPES.length)]}`,
+    `[INFO] Running semantic segmentation on frame ${frameCount}`,
+    `[DEBUG] Vehicle detection: ${Math.random() > 0.5 ? 'True' : 'False'}`,
+    `[INFO] Impact force estimation: ${(Math.random() * 1000 + 500).toFixed(1)}N`
   ];
   
   // Return a subset of outputs to simulate terminal scrolling

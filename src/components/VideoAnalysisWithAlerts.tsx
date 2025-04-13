@@ -4,6 +4,7 @@ import VideoAnalysis from '@/components/VideoAnalysis';
 import DriverAlerts from '@/components/alerts/DriverAlerts';
 import DataManagement from '@/components/alerts/DataManagement';
 import PythonTerminal from '@/components/PythonTerminal';
+import Speedometer from '@/components/Speedometer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Database, Bell, Terminal, Bot, MessageCircle } from 'lucide-react';
@@ -22,7 +23,29 @@ const VideoAnalysisWithAlerts: React.FC = () => {
     severity: AlertSeverity;
   } | null>(null);
   const [frameCount, setFrameCount] = useState(0);
+  const [currentSpeed, setCurrentSpeed] = useState(0);
   const alertTimerRef = useRef<number | null>(null);
+  const maxSpeed = 120;
+
+  // Simulate speed changes
+  useEffect(() => {
+    if (!isSimulating) {
+      setCurrentSpeed(0);
+      return;
+    }
+
+    const baseSpeed = 60;
+    const speedVariation = 30;
+    const speedInterval = setInterval(() => {
+      // Generate realistic speed variations
+      const newSpeed = baseSpeed + (Math.sin(Date.now() / 2000) * speedVariation);
+      // Add some random "bumps" to make it look more realistic
+      const randomBump = Math.random() > 0.9 ? (Math.random() * 15) - 7.5 : 0;
+      setCurrentSpeed(newSpeed + randomBump);
+    }, 200);
+
+    return () => clearInterval(speedInterval);
+  }, [isSimulating]);
 
   const handleSimulationChange = (simulating: boolean) => {
     setIsSimulating(simulating);
@@ -58,6 +81,10 @@ const VideoAnalysisWithAlerts: React.FC = () => {
     
     const distance = detection.distance || 50;
     let message = "";
+    
+    // Brief slowdown when pothole is detected
+    setCurrentSpeed(prev => prev - (detection.severity === 'high' ? 15 : 
+                                    detection.severity === 'medium' ? 10 : 5));
     
     switch(detection.severity) {
       case 'high':
@@ -146,6 +173,11 @@ const VideoAnalysisWithAlerts: React.FC = () => {
           onPotholeDetected={handleDetection}
           onFrameUpdate={handleFrameUpdate}
         />
+        {isSimulating && (
+          <div className="mt-3">
+            <Speedometer speed={currentSpeed} maxSpeed={maxSpeed} active={isSimulating} />
+          </div>
+        )}
       </div>
       <div className="lg:col-span-1">
         <Card className="h-full bg-card/95 border-border shadow-lg">

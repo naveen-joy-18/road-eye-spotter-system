@@ -1,9 +1,17 @@
 
 import React, { useState } from 'react';
-import { MapPin, Layers, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { MapPin, Layers, AlertCircle, ChevronUp, ChevronDown, Map, Globe, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface MapControlsProps {
   onGetLocation: () => void;
@@ -12,6 +20,8 @@ interface MapControlsProps {
   onToggleMapStyle: () => void;
   onToggleRoadQuality: () => void;
   roadQualityActive: boolean;
+  mapStyle?: string;
+  setMapStyle?: (style: string) => void;
 }
 
 export const MapControls: React.FC<MapControlsProps> = ({
@@ -20,7 +30,9 @@ export const MapControls: React.FC<MapControlsProps> = ({
   onZoomOut,
   onToggleMapStyle,
   onToggleRoadQuality,
-  roadQualityActive
+  roadQualityActive,
+  mapStyle = 'streets',
+  setMapStyle = () => {}
 }) => {
   const [expanded, setExpanded] = useState(true);
   const [locatingPosition, setLocatingPosition] = useState(false);
@@ -31,6 +43,9 @@ export const MapControls: React.FC<MapControlsProps> = ({
     onGetLocation();
     setTimeout(() => {
       setLocatingPosition(false);
+      toast.success("Location updated", {
+        description: "Map centered on your current location"
+      });
     }, 1500);
   };
 
@@ -39,8 +54,13 @@ export const MapControls: React.FC<MapControlsProps> = ({
     toast.info(expanded ? "Controls collapsed" : "Controls expanded");
   };
 
+  const handleMapStyleChange = (style: string) => {
+    setMapStyle(style);
+    toast.success(`Map style changed to ${style.charAt(0).toUpperCase() + style.slice(1)}`);
+  };
+
   return (
-    <div className="absolute top-4 right-4 map-control-panel p-2 rounded-md shadow-md transition-all duration-300 z-30">
+    <div className="absolute top-4 right-4 map-control-panel p-2 rounded-md shadow-md transition-all duration-300 z-30 bg-card/90 border border-border">
       <div className="flex justify-between items-center mb-1">
         <span className="text-xs font-medium ml-1">Map Controls</span>
         <Button 
@@ -105,21 +125,44 @@ export const MapControls: React.FC<MapControlsProps> = ({
               </TooltipContent>
             </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="bg-background shadow-sm hover:bg-muted transition-all"
-                  onClick={onToggleMapStyle}
-                >
-                  <Layers className="h-5 w-5 text-primary" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle map style</p>
-              </TooltipContent>
-            </Tooltip>
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="bg-background shadow-sm hover:bg-muted transition-all"
+                    >
+                      <Layers className="h-5 w-5 text-primary" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Change map style</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel>Map Style</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleMapStyleChange('streets')} className="flex items-center gap-2">
+                  <Map className="h-4 w-4" />
+                  <span>Streets</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleMapStyleChange('satellite')} className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  <span>Satellite</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleMapStyleChange('hybrid')} className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  <span>Hybrid</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleMapStyleChange('dark')} className="flex items-center gap-2">
+                  <Sun className="h-4 w-4" />
+                  <span>Dark</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Tooltip>
               <TooltipTrigger asChild>

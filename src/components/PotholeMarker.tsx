@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pothole } from '@/types';
-import { AlertTriangle, ThumbsUp } from 'lucide-react';
+import { AlertTriangle, ThumbsUp, Calendar, BarChart4 } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -20,6 +20,52 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [upvoted, setUpvoted] = useState(false);
   const [localUpvotes, setLocalUpvotes] = useState(pothole.upvotes);
+  const [roadAnalysis, setRoadAnalysis] = useState<{
+    surfaceIndex: number;
+    impactSeverity: number;
+    vibrationLevel: number;
+    estimatedRepairCost: number;
+  } | null>(null);
+
+  useEffect(() => {
+    // Generate random road analysis data when pothole is first viewed
+    if (isOpen && !roadAnalysis) {
+      // Surface quality index (0-100)
+      const surfaceIndex = Math.max(0, 100 - (pothole.severity === 'high' ? 
+        Math.floor(Math.random() * 50) + 50 : 
+        pothole.severity === 'medium' ? 
+        Math.floor(Math.random() * 30) + 30 : 
+        Math.floor(Math.random() * 20) + 10));
+      
+      // Impact severity (1-10)
+      const impactSeverity = pothole.severity === 'high' ? 
+        Math.floor(Math.random() * 3) + 8 : 
+        pothole.severity === 'medium' ? 
+        Math.floor(Math.random() * 4) + 4 : 
+        Math.floor(Math.random() * 3) + 1;
+      
+      // Vibration level (dB)
+      const vibrationLevel = pothole.severity === 'high' ? 
+        Math.floor(Math.random() * 20) + 60 : 
+        pothole.severity === 'medium' ? 
+        Math.floor(Math.random() * 20) + 40 : 
+        Math.floor(Math.random() * 20) + 20;
+      
+      // Estimated repair cost (INR)
+      const estimatedRepairCost = pothole.severity === 'high' ? 
+        Math.floor(Math.random() * 30000) + 20000 : 
+        pothole.severity === 'medium' ? 
+        Math.floor(Math.random() * 15000) + 5000 : 
+        Math.floor(Math.random() * 5000) + 1000;
+      
+      setRoadAnalysis({
+        surfaceIndex,
+        impactSeverity,
+        vibrationLevel,
+        estimatedRepairCost
+      });
+    }
+  }, [isOpen, pothole.severity, roadAnalysis]);
 
   // Map severity to appropriate colors
   const severityColor = {
@@ -52,6 +98,15 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
     }
   };
 
+  // Format cost in Indian Rupees
+  const formatCost = (cost: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(cost);
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -81,7 +136,8 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-medium text-sm text-foreground">{pothole.address}</h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
                 Reported {new Date(pothole.reportedAt).toLocaleDateString()}
               </p>
             </div>
@@ -117,6 +173,33 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
               </button>
             </div>
           </div>
+
+          {roadAnalysis && (
+            <div className="mt-3 border-t border-border pt-2">
+              <h4 className="text-xs font-medium flex items-center gap-1 mb-2">
+                <BarChart4 className="h-3 w-3" /> 
+                Advanced Analysis
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Surface Index</div>
+                  <div className="font-medium">{roadAnalysis.surfaceIndex}/100</div>
+                </div>
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Impact Severity</div>
+                  <div className="font-medium">{roadAnalysis.impactSeverity}/10</div>
+                </div>
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Vibration Level</div>
+                  <div className="font-medium">{roadAnalysis.vibrationLevel} dB</div>
+                </div>
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Est. Repair</div>
+                  <div className="font-medium">{formatCost(roadAnalysis.estimatedRepairCost)}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="border-t border-border">
           <div className="h-24 bg-background/60 flex items-center justify-center">
