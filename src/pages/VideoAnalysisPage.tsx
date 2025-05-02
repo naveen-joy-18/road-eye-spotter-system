@@ -5,7 +5,7 @@ import VideoAnalysisWithAlerts from '@/components/VideoAnalysisWithAlerts';
 import Map from '@/components/Map';
 import ReportForm from '@/components/ReportForm';
 import PotholeChatBot from '@/components/PotholeChatBot';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Bot, MessageCircle } from 'lucide-react';
@@ -44,10 +44,12 @@ const VideoAnalysisPage: React.FC = () => {
       toast.info("Video Analysis Module", {
         description: "Analyze road videos for potholes using our Python-powered AI"
       });
+    } else if (value === 'chat') {
+      toast.info("AI Assistant activated", {
+        description: "Ask questions about potholes and check the heatmap visualization"
+      });
     }
   };
-
-  const dummyApiKey = "demo-map-api-key";
 
   return (
     <Layout activeTab="video" onTabChange={(tab) => setActiveTab(tab)}>
@@ -92,7 +94,19 @@ const VideoAnalysisPage: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="map" className="mt-4 animate-in fade-in-50">
-            <Map googleMapsApiKey={dummyApiKey} />
+            <div className="neo-card p-6 flex flex-col items-center justify-center text-center">
+              <h2 className="text-xl font-bold mb-4">Interactive Map View</h2>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                The map functionality is now available through the Chat section.
+                Please navigate to the Chat tab and click the "See Heatmap" button.
+              </p>
+              <Button 
+                onClick={() => handleTabChange('chat')}
+                variant="default"
+              >
+                Go to Chat Section
+              </Button>
+            </div>
           </TabsContent>
           
           <TabsContent value="report" className="mt-4 animate-in fade-in-50">
@@ -237,10 +251,10 @@ const VideoAnalysisPage: React.FC = () => {
                     
                     <Alert className="mt-4 bg-background/80 border-border">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle className="text-shadow">Integrated AI System</AlertTitle>
+                      <AlertTitle className="text-shadow">New Feature!</AlertTitle>
                       <AlertDescription className="text-shadow">
-                        This chatbot uses the same AI technology that powers our pothole detection system,
-                        providing you with accurate and technical insights about road damage.
+                        Click the "See Heatmap" button in the top right corner of the chat
+                        to view a detailed heatmap of potholes across India with district-level statistics.
                       </AlertDescription>
                     </Alert>
                   </div>
@@ -249,7 +263,6 @@ const VideoAnalysisPage: React.FC = () => {
             </div>
           </TabsContent>
         </Tabs>
-        <Toaster />
       </div>
     </Layout>
   );

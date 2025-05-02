@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, Send, Cpu, Bot, User, Loader2 } from 'lucide-react';
+import { MessageCircle, Send, Cpu, Bot, User, Loader2, Map } from 'lucide-react';
 import { toast } from 'sonner';
 import { ChatMessage, streamPotholeAIResponse } from '@/services/cerebrasAI';
+
+import IndiaHeatmapView from './map/IndiaHeatmapView';
 
 const PotholeChatBot: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -18,6 +20,7 @@ const PotholeChatBot: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -90,6 +93,10 @@ const PotholeChatBot: React.FC = () => {
     }
   };
 
+  if (showHeatmap) {
+    return <IndiaHeatmapView onClose={() => setShowHeatmap(false)} />;
+  }
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -98,10 +105,21 @@ const PotholeChatBot: React.FC = () => {
             <Bot className="mr-2 h-5 w-5 text-primary" />
             Pothole Expert Chat
           </div>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Cpu className="h-3 w-3" />
-            <span>Cerebras AI</span>
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Cpu className="h-3 w-3" />
+              <span>Cerebras AI</span>
+            </Badge>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1 border-primary/30 hover:bg-primary/10"
+              onClick={() => setShowHeatmap(true)}
+            >
+              <Map className="h-4 w-4 text-primary" />
+              <span>See Heatmap</span>
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       

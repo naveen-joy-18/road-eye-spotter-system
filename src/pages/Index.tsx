@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
-import Map from '@/components/Map';
 import ReportForm from '@/components/ReportForm';
 import PotholeList from '@/components/PotholeList';
 import Dashboard from '@/components/Dashboard';
@@ -9,14 +8,16 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DriverAlerts from '@/components/alerts/DriverAlerts';
 import NavigationAlerts from '@/components/alerts/NavigationAlerts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell } from 'lucide-react';
+import { Bell, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState('map');
-  // Add a state to track simulation status for DriverAlerts
   const [simulationActive, setSimulationActive] = useState(false);
+  const navigate = useNavigate();
   
-  // Set document title for the app
   React.useEffect(() => {
     document.title = "ROADSENSE AI - Road Monitoring System";
   }, []);
@@ -27,7 +28,26 @@ const Index: React.FC = () => {
         <TabsContent value="map" className="m-0">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <Map googleMapsApiKey="AIzaSyBaBEjbxIwSyPVLXplT0caOLUYY0hrqC9I" />
+              <Card className="h-full min-h-[400px] flex flex-col items-center justify-center bg-muted/30 p-6">
+                <MapPin className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+                <h2 className="text-xl font-bold mb-2">Road Map View</h2>
+                <p className="text-muted-foreground text-center mb-6 max-w-md">
+                  The interactive map has been moved to the Chat section. You can access the detailed pothole heatmap via the "See Heatmap" button in the Chat tab.
+                </p>
+                <Button 
+                  onClick={() => {
+                    navigate('/video-analysis');
+                    setTimeout(() => {
+                      const chatTab = document.querySelector('[value="chat"]') as HTMLElement;
+                      if (chatTab) chatTab.click();
+                      toast.info("Navigate to the Heatmap button in the Chat section");
+                    }, 100);
+                  }} 
+                  variant="default"
+                >
+                  Go to Heatmap Section
+                </Button>
+              </Card>
             </div>
             <div className="lg:col-span-1 space-y-6">
               <PotholeList />
@@ -61,7 +81,6 @@ const Index: React.FC = () => {
           <Dashboard />
         </TabsContent>
         
-        {/* Add TabsContent for video tab to handle navigation from Layout */}
         <TabsContent value="video" className="m-0">
           {/* This will be empty since video content is on VideoAnalysisPage */}
         </TabsContent>
