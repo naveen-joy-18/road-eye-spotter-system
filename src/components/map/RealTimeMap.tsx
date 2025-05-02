@@ -5,6 +5,13 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { potholes } from '@/data/potholes';
 
+// Add type definition for Leaflet
+declare global {
+  interface Window {
+    L: any;
+  }
+}
+
 interface RealTimeMapProps {
   onClose: () => void;
 }

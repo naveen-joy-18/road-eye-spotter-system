@@ -22,8 +22,8 @@ interface MapLayersProps {
   toggleLayer: (layer: 'potholes' | 'traffic' | 'roadQuality' | 'construction') => void;
   toggleRoadQualityView: () => void;
   downloadMapData: () => void;
-  mapStyle?: string;
-  setMapStyle?: (style: string) => void;
+  mapStyle?: 'streets' | 'satellite' | 'hybrid' | 'dark';
+  setMapStyle?: (style: 'streets' | 'satellite' | 'hybrid' | 'dark') => void;
   showRealMap?: () => void;
 }
 
@@ -57,7 +57,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
     toast.info(`${newState ? 'Showing' : 'Hidden'} ${layerNames[layer]} layer`);
   };
 
-  const handleMapStyleChange = (value: string) => {
+  const handleMapStyleChange = (value: 'streets' | 'satellite' | 'hybrid' | 'dark') => {
     setMapStyle(value);
     toast.success(`Map style changed to ${value.charAt(0).toUpperCase() + value.slice(1)}`);
   };

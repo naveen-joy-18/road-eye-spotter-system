@@ -51,7 +51,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   });
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapStyle, setMapStyle] = useState<'streets' | 'satellite'>('satellite'); // Default to satellite
+  const [mapStyle, setMapStyle] = useState<'streets' | 'satellite' | 'hybrid' | 'dark'>('satellite'); // Default to satellite
   const [trafficDensity, setTrafficDensity] = useState(50);
   const [roadQualityView, setRoadQualityView] = useState(false);
   const [roadDamageStats, setRoadDamageStats] = useState({
@@ -281,7 +281,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
 
   const toggleMapStyle = () => {
     const newStyle = mapStyle === 'streets' ? 'satellite' : 'streets';
-    setMapStyle(newStyle);
+    setMapStyle(newStyle as 'streets' | 'satellite');
     toast.info(`Switched to ${newStyle} view`);
   };
 
