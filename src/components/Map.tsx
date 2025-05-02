@@ -26,6 +26,7 @@ import { MapInfoPanel } from './map/MapInfoPanel';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { generate3DMesh } from '@/services/meshGeneration';
 import MapLayers from './map/MapLayers';
+import RealTimeMap from './map/RealTimeMap';
 
 interface MapProps {
   googleMapsApiKey?: string;
@@ -50,7 +51,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   });
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapStyle, setMapStyle] = useState<'streets' | 'satellite'>('streets');
+  const [mapStyle, setMapStyle] = useState<'streets' | 'satellite'>('satellite'); // Default to satellite
   const [trafficDensity, setTrafficDensity] = useState(50);
   const [roadQualityView, setRoadQualityView] = useState(false);
   const [roadDamageStats, setRoadDamageStats] = useState({
@@ -75,6 +76,7 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
   const [generating3D, setGenerating3D] = useState<boolean>(false);
   const [meshUrl, setMeshUrl] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [showRealTimeMap, setShowRealTimeMap] = useState<boolean>(false);
   
   const [mapMarkers, setMapMarkers] = useState<any[]>([]);
   const loadingIntervalRef = useRef<number | null>(null);
@@ -402,6 +404,11 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     }, 1000);
   };
 
+  const handleShowRealMap = () => {
+    setShowRealTimeMap(true);
+    toast.info("Opening real-time global pothole map");
+  };
+
   if (!googleMapsApiKey) {
     return (
       <div className="p-4 border border-red-500 rounded-md bg-red-50 text-red-700">
@@ -652,6 +659,9 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
               toggleLayer={toggleLayer}
               toggleRoadQualityView={toggleRoadQualityView}
               downloadMapData={downloadMapData}
+              mapStyle={mapStyle}
+              setMapStyle={setMapStyle}
+              showRealMap={handleShowRealMap}
             />
 
             <div className="absolute top-4 right-20 neo-glass px-2 py-1 rounded text-xs flex items-center font-futuristic">
@@ -809,6 +819,9 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Real-time map modal */}
+      {showRealTimeMap && <RealTimeMap onClose={() => setShowRealTimeMap(false)} />}
     </div>
   );
 };

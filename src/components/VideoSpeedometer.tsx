@@ -1,16 +1,26 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface SpeedometerProps {
-  speed: number;
-  maxSpeed: number;
-  active: boolean;
+interface VideoSpeedometerProps {
   className?: string;
 }
 
-const Speedometer: React.FC<SpeedometerProps> = ({ speed, maxSpeed, active, className }) => {
+const VideoSpeedometer: React.FC<VideoSpeedometerProps> = ({ className }) => {
+  const [speed, setSpeed] = useState<number>(0);
+  const [maxSpeed, setMaxSpeed] = useState<number>(120);
+  
+  useEffect(() => {
+    // Simulate speed changes
+    const interval = setInterval(() => {
+      const newSpeed = Math.floor(Math.random() * 100) + 20; // Random speed between 20-120 km/h
+      setSpeed(newSpeed);
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
   // Calculate the percentage for the gauge
   const percentage = Math.min((speed / maxSpeed) * 100, 100);
   
@@ -20,15 +30,14 @@ const Speedometer: React.FC<SpeedometerProps> = ({ speed, maxSpeed, active, clas
     if (speed < maxSpeed * 0.7) return 'text-amber-500';
     return 'text-red-500';
   };
-
+  
   return (
     <div className={cn(
-      "bg-card/80 border border-border rounded-lg p-3 shadow-md transition-opacity",
-      active ? "opacity-100" : "opacity-50",
+      "bg-card/80 border border-border rounded-lg p-3 shadow-md",
       className
     )}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium">Vehicle Speed</h3>
+        <h3 className="text-sm font-medium">Speed</h3>
         <span className={cn("text-xl font-bold", getSpeedColor())}>
           {Math.round(speed)} <span className="text-xs">km/h</span>
         </span>
@@ -59,4 +68,4 @@ const Speedometer: React.FC<SpeedometerProps> = ({ speed, maxSpeed, active, clas
   );
 };
 
-export default Speedometer;
+export default VideoSpeedometer;

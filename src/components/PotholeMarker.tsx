@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 interface PotholeMarkerProps {
   pothole: Pothole;
   position?: { left: string; top: string }; // Allow position override
+  zIndex?: number; // Add zIndex for proper layering
 }
 
-const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
+const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position, zIndex = 10 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [upvoted, setUpvoted] = useState(false);
   const [localUpvotes, setLocalUpvotes] = useState(pothole.upvotes);
@@ -117,7 +118,8 @@ const PotholeMarker: React.FC<PotholeMarkerProps> = ({ pothole, position }) => {
           )}
           style={{ 
             left: leftPosition, 
-            top: topPosition 
+            top: topPosition,
+            zIndex: isOpen ? 50 : zIndex // Increase zIndex when open
           }}
         >
           <div className="flex flex-col items-center">

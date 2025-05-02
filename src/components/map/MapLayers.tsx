@@ -24,6 +24,7 @@ interface MapLayersProps {
   downloadMapData: () => void;
   mapStyle?: string;
   setMapStyle?: (style: string) => void;
+  showRealMap?: () => void;
 }
 
 const MapLayers: React.FC<MapLayersProps> = ({ 
@@ -32,7 +33,8 @@ const MapLayers: React.FC<MapLayersProps> = ({
   toggleRoadQualityView, 
   downloadMapData,
   mapStyle = 'streets',
-  setMapStyle = () => {}
+  setMapStyle = () => {},
+  showRealMap = () => {}
 }) => {
   const handleDownload = () => {
     downloadMapData();
@@ -127,15 +129,25 @@ const MapLayers: React.FC<MapLayersProps> = ({
         </Button>
       </div>
       
-      <div className="mt-2 pt-2 border-t border-border">
+      <div className="mt-2 pt-2 border-t border-border space-y-2">
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full mt-1 neo-glass font-futuristic"
+          className="w-full neo-glass font-futuristic"
           onClick={handleDownload}
         >
           <Download className="h-3 w-3 mr-1" />
           Export Data
+        </Button>
+        
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="w-full neo-glass font-futuristic bg-primary hover:bg-primary/80"
+          onClick={showRealMap}
+        >
+          <MapIcon className="h-3 w-3 mr-1" />
+          Show Real Map
         </Button>
       </div>
     </div>
