@@ -44,6 +44,9 @@ import {
   ProcessingStats, 
   PotholeDetection 
 } from '@/utils/simulatedPythonBackend';
+import { yoloService } from '@/services/yoloDetection';
+import { reportingService } from '@/services/reportingService';
+import { gpsService } from '@/services/gpsService';
 
 interface VideoAnalysisProps {
   onSimulationChange?: (isSimulating: boolean) => void;

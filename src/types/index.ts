@@ -31,3 +31,22 @@ export interface MapPosition {
   longitude: number;
   zoom: number;
 }
+
+export interface PotholeDetection {
+  id: string;
+  timeInVideo?: number;
+  confidence: number;
+  severity: 'low' | 'medium' | 'high';
+  size?: 'small' | 'medium' | 'large';
+  boundingBox?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  depthEstimate?: number;
+  surfaceDamageEstimate?: number;
+  detectionAlgorithm?: string;
+  distance?: number;
+  locationName?: string | null;
+}

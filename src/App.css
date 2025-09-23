@@ -79,7 +79,7 @@ body, html {
 
 /* Typography styles */
 h1.title {
-  @apply font-display text-4xl font-bold tracking-tighter mb-4 text-gradient;
+  @apply font-display text-4xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400;
 }
 
 h2.subtitle {

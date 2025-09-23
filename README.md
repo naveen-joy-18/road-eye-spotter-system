@@ -1,73 +1,69 @@
-# Welcome to your Lovable project
+# ROADSENSE AI - Advanced Pothole Detection System
 
-## Project info
+A comprehensive real-time pothole detection system using YOLO (You Only Look Once) deep learning models, integrated with GPS tracking, automated reporting, and driver alert systems.
 
-**URL**: https://lovable.dev/projects/1ae84a67-2640-4d8f-8e79-f9b1190ddfa9
+## 🚀 Features
 
-## How can I edit this code?
+- **YOLOv8 Integration**: Real-time pothole detection using YOLO models
+- **Real-time Alerts**: Voice and visual warnings for detected potholes
+- **GPS Integration**: Automatic location capture for pothole reports
+- **Text File Reporting**: Save detailed reports as downloadable text files
+- **Interactive Maps**: View pothole locations on Google Maps
+- **AI Chat Assistant**: Get help and information about potholes
 
-There are several ways of editing your application.
+## 🛠️ Quick Setup
 
-**Use Lovable**
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1ae84a67-2640-4d8f-8e79-f9b1190ddfa9) and start prompting.
+2. **Download YOLO Model**:
+   ```bash
+   mkdir -p public/models
+   # Download yolo8n.pt and place in public/models/yolo8n.pt
+   ```
 
-Changes made via Lovable will be committed automatically to this repo.
+3. **Start Development**:
+   ```bash
+   npm run dev
+   ```
 
-**Use your preferred IDE**
+## 📱 Usage
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Navigate to "Video Analysis" page
+2. Click "Start Detection" to activate camera
+3. Grant camera and GPS permissions
+4. System will detect potholes and create automatic reports
+5. Download reports as text files from the interface
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🔧 Model Setup
 
-Follow these steps:
+Place your YOLO model file (`yolo8n.pt`) in `public/models/` directory. The system will automatically load it for real-time detection.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+**Note**: Leave space for manual YOLO model download as requested.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🗂️ Key Components
 
-# Step 3: Install the necessary dependencies.
-npm i
+- `src/services/yoloDetection.ts` - YOLO model integration
+- `src/services/gpsService.ts` - GPS and location services  
+- `src/services/reportingService.ts` - Text file reporting system
+- `src/components/RealTimeDetection.tsx` - Camera-based detection
+- `src/components/MapView.tsx` - Interactive map with markers
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 📄 Report Format
 
-**Edit a file directly in GitHub**
+Reports are saved as structured text files containing:
+- Detection details (confidence, severity, algorithm)
+- GPS coordinates and address
+- Timestamp and technical metadata
+- Pothole characteristics (depth, surface damage)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🎯 Next Steps
 
-**Use GitHub Codespaces**
+1. Download your preferred YOLO model (yolo8n.pt recommended)
+2. Place in `public/models/` directory
+3. Configure Google Maps API key for mapping features
+4. Start detecting potholes in real-time!
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/1ae84a67-2640-4d8f-8e79-f9b1190ddfa9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Built with React, TypeScript, and cutting-edge AI technology.
