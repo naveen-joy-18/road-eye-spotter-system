@@ -301,9 +301,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
               const severityText = detection.severity === 'high' ? 'Critical' : 
                               detection.severity === 'medium' ? 'Moderate' : 'Minor';
               
-              const locationText = detection.locationName ? 
-                `near ${detection.locationName}` : 
-                `${detection.distance}m ahead`;
+              const locationText = `${detection.distance}m ahead`;
               
               toast.warning(
                 `${severityText} Pothole Detected!`, 
@@ -554,9 +552,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
               <div className="bg-black/70 text-white px-2 py-1 rounded flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 <span>
-                  {selectedDetection.locationName ? 
-                    selectedDetection.locationName : 
-                    `${selectedDetection.distance}m ahead`}
+                  {selectedDetection.distance}m ahead
                 </span>
               </div>
             </div>
@@ -611,8 +607,8 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
               <span>At: <span className="font-medium">{formatTime(selectedDetection.timeInVideo)}</span></span>
             </div>
             <div className="text-sm mt-1 flex justify-between">
-              <span>Location: <span className="font-medium">
-                {selectedDetection.locationName || `${selectedDetection.distance || 'Unknown'}m ahead`}
+              <span>Distance: <span className="font-medium">
+                {selectedDetection.distance || 'Unknown'}m ahead
               </span></span>
               <span>Depth: <span className="font-medium">{selectedDetection.depthEstimate}cm</span></span>
             </div>
@@ -891,7 +887,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
                         <div className="mt-2 text-xs flex justify-between">
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
-                            <span>{detection.locationName || `${detection.distance}m ahead`}</span>
+                            <span>{detection.distance}m ahead</span>
                           </div>
                           <div>
                             Frame #{detection.frameNumber} | Confidence: {Math.round(detection.confidence * 100)}%

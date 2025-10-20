@@ -59,20 +59,41 @@ class ReportingService {
   }
 
   /**
-   * Save report to text file (local storage)
+   * Save report to text file (download to local directory)
    */
-  async saveReportToFile(report: PotholeReport): Promise<boolean> {
+  async saveReportToFile(report: PotholeReport, imageData?: string): Promise<boolean> {
     try {
       const reportText = this.formatReportAsText(report);
       
-      // Save to localStorage with timestamp
-      const storageKey = `pothole_report_${report.id}`;
-      localStorage.setItem(storageKey, reportText);
+      // Auto-download report as text file
+      const blob = new Blob([reportText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `pothole_report_${report.id}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      // If image data is provided, also download the image
+      if (imageData) {
+        const imgBlob = await fetch(imageData).then(r => r.blob());
+        const imgUrl = URL.createObjectURL(imgBlob);
+        const imgLink = document.createElement('a');
+        imgLink.href = imgUrl;
+        imgLink.download = `pothole_image_${report.id}.jpg`;
+        document.body.appendChild(imgLink);
+        imgLink.click();
+        document.body.removeChild(imgLink);
+        URL.revokeObjectURL(imgUrl);
+      }
       
       // Update report status
       report.status = 'submitted';
       
-      console.log('[Reporting] Report saved to local storage:', report.id);
+      console.log('[Reporting] Report saved to file:', report.id);
       return true;
     } catch (error) {
       console.error('[Reporting] Failed to save report:', error);

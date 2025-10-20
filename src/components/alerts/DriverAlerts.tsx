@@ -18,19 +18,7 @@ interface DriverAlertsProps {
   alertSeverity?: AlertSeverity;
 }
 
-// Indian location names for alerts
-const INDIAN_LOCATIONS = [
-  "Connaught Place, Delhi",
-  "MG Road, Bangalore",
-  "Marine Drive, Mumbai",
-  "Park Street, Kolkata",
-  "Lal Darwaza, Hyderabad",
-  "Anna Salai, Chennai",
-  "FC Road, Pune",
-  "Hazratganj, Lucknow",
-  "Mall Road, Shimla",
-  "MG Marg, Gangtok"
-];
+// Removed INDIAN_LOCATIONS - no longer needed
 
 const DriverAlerts: React.FC<DriverAlertsProps> = ({ 
   simulationActive, 
@@ -61,25 +49,7 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
         });
       }, 1000);
       
-      // Add simulated alerts if none provided from parent
-      if (!currentAlert) {
-        const simulationTimer = window.setInterval(() => {
-          const shouldTriggerAlert = Math.random() < 0.3;
-          if (shouldTriggerAlert) {
-            const severities: AlertSeverity[] = ['low', 'medium', 'high'];
-            const randomSeverity = severities[Math.floor(Math.random() * severities.length)];
-            const distance = Math.floor(Math.random() * 100) + 10;
-            const locationIndex = Math.floor(Math.random() * INDIAN_LOCATIONS.length);
-            
-            handleAlert(createAlertMessage(randomSeverity, distance, INDIAN_LOCATIONS[locationIndex]), randomSeverity, INDIAN_LOCATIONS[locationIndex]);
-          }
-        }, 5000);
-        
-        return () => {
-          clearInterval(timer || undefined);
-          clearInterval(simulationTimer);
-        };
-      }
+      // Removed automatic random alerts - alerts only come from actual detections
     } else {
       setAlertDistance(0);
       setAlertProgress(0);
@@ -94,8 +64,7 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
   // Handle new alerts coming from props
   useEffect(() => {
     if (currentAlert && simulationActive) {
-      const locationIndex = Math.floor(Math.random() * INDIAN_LOCATIONS.length);
-      handleAlert(currentAlert, alertSeverity, INDIAN_LOCATIONS[locationIndex]);
+      handleAlert(currentAlert, alertSeverity);
     }
   }, [currentAlert, alertSeverity, simulationActive]);
   
@@ -108,12 +77,12 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
     }
   }, [alertDistance]);
   
-  const createAlertMessage = (severity: AlertSeverity, distance: number, location?: string): string => {
-    const locationText = location ? `near ${location}` : `${distance} meters ahead`;
+  const createAlertMessage = (severity: AlertSeverity, distance: number): string => {
+    const locationText = `${distance} meters ahead`;
     
     switch(severity) {
       case 'high':
-        return `Warning! Critical pothole ahead ${locationText}. Reduce speed immediately.`;
+        return `Warning! Critical pothole ${locationText}. Reduce speed immediately.`;
       case 'medium':
         return `Caution! Pothole detected ${locationText}. Prepare to slow down.`;
       case 'low':
@@ -123,7 +92,7 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
     }
   };
   
-  const handleAlert = (message: string, severity: AlertSeverity, location?: string) => {
+  const handleAlert = (message: string, severity: AlertSeverity) => {
     setCurrentAlertText(message);
     
     // Add to history
@@ -131,8 +100,7 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
       {
         timestamp: new Date(),
         message,
-        severity,
-        location
+        severity
       },
       ...prev.slice(0, 9) // Keep last 10 alerts
     ]);
@@ -294,12 +262,6 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
                 </span>
               </div>
               <p className="mt-1 break-words">{alert.message}</p>
-              {alert.location && (
-                <div className="mt-1 flex items-center gap-1 text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  <span>{alert.location}</span>
-                </div>
-              )}
             </div>
           )) : (
             <div className="text-xs text-center py-2 text-muted-foreground">

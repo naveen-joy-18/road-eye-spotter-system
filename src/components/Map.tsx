@@ -27,6 +27,7 @@ import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { generate3DMesh } from '@/services/meshGeneration';
 import MapLayers from './map/MapLayers';
 import RealTimeMap from './map/RealTimeMap';
+import BangaloreLivePotholeMap from './BangaloreLivePotholeMap';
 
 interface MapProps {
   googleMapsApiKey?: string;
@@ -422,10 +423,14 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
     <div className="flex flex-col gap-4">
       <h1 className="futuristic-heading text-gradient text-2xl mb-2">POTHOLE DETECTION & MAPPING</h1>
       <Tabs value={mapTabView} onValueChange={setMapTabView} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 font-futuristic">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 font-futuristic">
           <TabsTrigger value="visualization" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             <span>Map Visualization</span>
+          </TabsTrigger>
+          <TabsTrigger value="bangalore" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            <span>Bangalore Live</span>
           </TabsTrigger>
           <TabsTrigger value="traffic" className="flex items-center gap-2">
             <Route className="h-4 w-4" />
@@ -671,6 +676,10 @@ const Map: React.FC<MapProps> = ({ googleMapsApiKey }) => {
 
             <MapLegend />
           </div>
+        </TabsContent>
+
+        <TabsContent value="bangalore" className="mt-4">
+          <BangaloreLivePotholeMap />
         </TabsContent>
 
         <TabsContent value="traffic" className="mt-4">

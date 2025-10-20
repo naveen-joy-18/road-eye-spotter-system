@@ -27,19 +27,7 @@ export type PotholeDetection = {
   vehicleRiskLevel?: number; // risk level for vehicles (1-10)
 };
 
-// Indian city/location names for simulation
-const INDIAN_LOCATIONS = [
-  "Connaught Place, Delhi",
-  "MG Road, Bangalore",
-  "Marine Drive, Mumbai",
-  "Park Street, Kolkata",
-  "Lal Darwaza, Hyderabad",
-  "Anna Salai, Chennai",
-  "FC Road, Pune",
-  "Hazratganj, Lucknow",
-  "Mall Road, Shimla",
-  "MG Marg, Gangtok"
-];
+// Removed INDIAN_LOCATIONS - no longer generating random location names
 
 // Road types for simulation
 const ROAD_TYPES = [
@@ -230,7 +218,7 @@ const generateRealisticDetections = (videoUrl: string): PotholeDetection[] => {
           lng: 78.9629 + (Math.random() - 0.5) * 5
         },
         distance: Math.floor(Math.random() * 80) + 10,
-        locationName: demo.location,
+        locationName: null,
         frameNumber: Math.floor(demo.time * 30), // Assuming 30fps
         pixelCoordinates: {
           x1: Math.floor(Math.random() * 300) + 100,
@@ -255,17 +243,8 @@ const generateRealisticDetections = (videoUrl: string): PotholeDetection[] => {
       const timeVariation = (videoDuration / numDetections) * 0.5;
       const timeInVideo = baseTime + (Math.random() * timeVariation);
       
-      // Location selection logic with bias toward high-risk areas
-      let locationName = INDIAN_LOCATIONS[Math.floor(Math.random() * INDIAN_LOCATIONS.length)];
+      // Removed location name logic - no random locations
       let severityBias = 0;
-      
-      // Check if this is a high-risk location
-      const highRiskLocation = HIGH_RISK_LOCATIONS.find(loc => loc.name === locationName);
-      if (highRiskLocation && Math.random() < highRiskLocation.probability) {
-        // Use the typical severity for this location
-        severityBias = highRiskLocation.typicalSeverity === 'high' ? 2 : 
-                       highRiskLocation.typicalSeverity === 'medium' ? 1 : 0;
-      }
       
       // Time-based probability adjustment
       if (Math.random() < getTimeProbability(timeInVideo, videoDuration)) {
@@ -303,7 +282,7 @@ const generateRealisticDetections = (videoUrl: string): PotholeDetection[] => {
           lng: 78.9629 + (Math.random() - 0.5) * 10
         },
         distance: Math.floor(Math.random() * 100) + 10,
-        locationName,
+        locationName: null,
         frameNumber: Math.floor(timeInVideo * 30), // Assuming 30fps
         pixelCoordinates: {
           x1: Math.floor(Math.random() * 300) + 100,
