@@ -33,10 +33,17 @@ class YOLODetectionRealService {
     try {
       console.log('[YOLO Real] Loading model from Hugging Face:', modelName);
       
-      // Load object detection pipeline
-      const detector = await pipeline('object-detection', modelName, {
-        device: 'webgpu', // Use WebGPU for better performance
-      });
+      // Load object detection pipeline - try WebGPU first, fallback to WASM
+      let detector;
+      try {
+        detector = await pipeline('object-detection', modelName, {
+          device: 'webgpu',
+        });
+        console.log('[YOLO Real] Using WebGPU acceleration');
+      } catch (gpuError) {
+        console.log('[YOLO Real] WebGPU not available, using WASM');
+        detector = await pipeline('object-detection', modelName);
+      }
 
       this.model = {
         detector,
@@ -48,7 +55,7 @@ class YOLODetectionRealService {
       return true;
     } catch (error) {
       console.error('[YOLO Real] Failed to load model:', error);
-      console.log('[YOLO Real] Falling back to simulation mode');
+      console.log('[YOLO Real] Model loading failed - detection will use fallback mode');
       return false;
     }
   }
@@ -171,7 +178,7 @@ class YOLODetectionRealService {
       surfaceDamageEstimate: this.estimateSurfaceDamage(detection.severity),
       detectionAlgorithm: `${this.model?.modelName || 'YOLO'} (Real)`,
       distance: this.estimateDistance(detection.bbox),
-      locationName: null
+      locationName: null // No dummy location names
     }));
   }
 
@@ -192,32 +199,13 @@ class YOLODetectionRealService {
 
   /**
    * Simulate YOLO detection (fallback when model fails)
+   * Returns empty array - only detect when real model is loaded
    */
   private simulateDetection(confidenceThreshold: number): DetectionResult[] {
-    const detections: DetectionResult[] = [];
-    
-    // Simulate random detections for demonstration
-    const numDetections = Math.floor(Math.random() * 3);
-    
-    for (let i = 0; i < numDetections; i++) {
-      const confidence = Math.random() * 0.5 + 0.5; // 0.5 to 1.0
-      
-      if (confidence >= confidenceThreshold) {
-        detections.push({
-          bbox: [
-            Math.random() * 400 + 100, // x
-            Math.random() * 400 + 100, // y
-            Math.random() * 100 + 50,  // width
-            Math.random() * 100 + 50   // height
-          ],
-          confidence,
-          class: 'pothole',
-          severity: confidence > 0.8 ? 'high' : confidence > 0.6 ? 'medium' : 'low'
-        });
-      }
-    }
-
-    return detections;
+    // Don't simulate - return empty array
+    // Only detect when real model is loaded
+    console.log('[YOLO Real] Model not loaded - no detections');
+    return [];
   }
 
   private determineSizeFromBbox(bbox: number[]): 'small' | 'medium' | 'large' {
