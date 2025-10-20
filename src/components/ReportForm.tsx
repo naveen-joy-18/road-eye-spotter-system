@@ -85,15 +85,15 @@ const ReportForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     // Create a new pothole object
     const newPothole: Pothole = {
-      id: `${potholes.length + 1}`,
-      latitude: formData.latitude || 37.7749 + (Math.random() - 0.5) * 0.1,
-      longitude: formData.longitude || -122.4194 + (Math.random() - 0.5) * 0.1,
+      id: `report-${Date.now()}`,
+      latitude: formData.latitude || 0,
+      longitude: formData.longitude || 0,
       address: formData.address || 'Unknown address',
       severity: formData.severity,
       status: 'reported',
@@ -101,19 +101,25 @@ const ReportForm: React.FC = () => {
       updatedAt: null,
       description: formData.description || 'No description provided',
       imageUrl: previewUrl || '/placeholder.svg',
-      reporter: 'anonymous@example.com',
+      reporter: 'User Report',
       upvotes: 0
     };
     
     // Add the new pothole to the potholes array
     potholes.unshift(newPothole);
     
-    console.log('Submitted form data:', formData);
-    console.log('New pothole added:', newPothole);
-    console.log('Updated potholes array:', potholes);
+    // Generate CSV file with all pothole reports
+    const csvContent = generateCSV(potholes);
+    downloadFile(csvContent, 'pothole_reports.csv', 'text/csv');
+    
+    // Also save as JSON
+    const jsonContent = JSON.stringify(potholes, null, 2);
+    downloadFile(jsonContent, 'pothole_reports.json', 'application/json');
+    
+    console.log('Pothole reported and saved to files');
     
     toast.success('Pothole reported successfully!', {
-      description: `Your report for ${formData.address} has been submitted.`
+      description: 'Report saved to pothole_reports.csv and pothole_reports.json'
     });
     
     // Reset form
@@ -127,6 +133,41 @@ const ReportForm: React.FC = () => {
     });
     setPreviewUrl(null);
     setIsSubmitting(false);
+  };
+
+  // Generate CSV from potholes data
+  const generateCSV = (data: Pothole[]): string => {
+    const headers = ['ID', 'Latitude', 'Longitude', 'Address', 'Severity', 'Status', 'Reported At', 'Description', 'Reporter', 'Upvotes'];
+    const rows = data.map(p => [
+      p.id,
+      p.latitude.toString(),
+      p.longitude.toString(),
+      `"${p.address}"`,
+      p.severity,
+      p.status,
+      p.reportedAt,
+      `"${p.description}"`,
+      p.reporter,
+      p.upvotes.toString()
+    ]);
+    
+    return [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+  };
+
+  // Download file helper
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
