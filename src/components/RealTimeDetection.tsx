@@ -17,7 +17,7 @@ import {
   Settings,
   Zap
 } from 'lucide-react';
-import { yoloService } from '@/services/yoloDetection';
+import { yoloRealService } from '@/services/yoloDetectionReal';
 import { gpsService } from '@/services/gpsService';
 import { reportingService, PotholeReport } from '@/services/reportingService';
 import { PotholeDetection } from '@/types';
@@ -95,7 +95,7 @@ const RealTimeDetection: React.FC<RealTimeDetectionProps> = ({
         });
       }, 200);
 
-      const success = await yoloService.loadModel();
+      const success = await yoloRealService.loadModel();
       
       clearInterval(progressInterval);
       setModelLoadingProgress(100);
@@ -149,45 +149,49 @@ const RealTimeDetection: React.FC<RealTimeDetectionProps> = ({
     setDetectionCount(0);
     
     try {
-      detectionStopRef.current = await yoloService.processVideoStream(
+      detectionStopRef.current = await yoloRealService.processVideoStream(
         videoRef.current,
         async (detections) => {
           setCurrentDetections(detections);
-          setDetectionCount(prev => prev + detections.length);
           
-          // Process each detection
-          for (const detection of detections) {
-            // Trigger callback
-            if (onDetection) {
-              onDetection(detection);
-            }
+          // Only process if we have NEW detections
+          if (detections.length > 0) {
+            setDetectionCount(prev => prev + detections.length);
             
-            // Play voice alert
-            speakAlertWithSeverity(
-              `${detection.severity} pothole detected ${detection.distance} meters ahead`,
-              detection.severity
-            );
-            
-            // Create report automatically
-            if (isGPSEnabled) {
-              try {
-                const report = await reportingService.createReport(detection, 'automatic');
-                await reportingService.saveReportToFile(report);
-                setLastReport(report);
-                
-                if (onReportCreated) {
-                  onReportCreated(report);
+            // Process each detection
+            for (const detection of detections) {
+              // Trigger callback
+              if (onDetection) {
+                onDetection(detection);
+              }
+              
+              // Play voice alert ONLY on new detection
+              speakAlertWithSeverity(
+                `${detection.severity} severity pothole detected ${detection.distance} meters ahead`,
+                detection.severity
+              );
+              
+              // Create report automatically
+              if (isGPSEnabled) {
+                try {
+                  const report = await reportingService.createReport(detection, 'automatic');
+                  await reportingService.saveReportToFile(report);
+                  setLastReport(report);
+                  
+                  if (onReportCreated) {
+                    onReportCreated(report);
+                  }
+                  
+                  toast.success(`Pothole report created: ${report.id.substring(0, 8)}...`);
+                } catch (error) {
+                  console.error('Failed to create report:', error);
                 }
-                
-                toast.success(`Pothole report created: ${report.id.substring(0, 8)}...`);
-              } catch (error) {
-                console.error('Failed to create report:', error);
               }
             }
+            
+            // Draw detection boxes on canvas
+            drawDetections(detections);
           }
-          
-          // Draw detection boxes on canvas
-          drawDetections(detections);
         },
         { fps, confidenceThreshold }
       );
