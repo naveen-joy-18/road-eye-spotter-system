@@ -120,10 +120,11 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
     setAudioEnabled(enabled);
     if (!enabled) {
       cancelSpeech();
-      toast.info("Voice alerts disabled");
     } else {
-      toast.success("Voice alerts enabled");
-      speakAlertWithSeverity("Voice alert system activated", "low");
+      // Only speak if simulation is active to avoid random alerts
+      if (simulationActive) {
+        speakAlertWithSeverity("Voice alert system activated", "low");
+      }
     }
   };
 
@@ -229,9 +230,7 @@ const DriverAlerts: React.FC<DriverAlertsProps> = ({
             variant="outline" 
             size="sm"
             className="mt-4"
-            onClick={() => {
-              toast.info("Please start simulation from the video panel");
-            }}
+            disabled
           >
             Start Simulation
           </Button>

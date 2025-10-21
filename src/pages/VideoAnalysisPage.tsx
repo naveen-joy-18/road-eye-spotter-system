@@ -71,11 +71,11 @@ const VideoAnalysisPage: React.FC = () => {
             <div className="mb-4 flex justify-between items-center">
               <h2 className="text-lg md:text-2xl font-bold text-gradient">Road Condition Video Analysis</h2>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => toast.info("Documentation opened in new tab")}>
+                <Button variant="outline">
                   <span className="hidden md:inline">Help Guide</span>
                   <span className="inline md:hidden">Help</span>
                 </Button>
-                <Button onClick={() => toast.success("Analysis settings saved")}>
+                <Button>
                   Settings
                 </Button>
               </div>
@@ -123,34 +123,11 @@ const VideoAnalysisPage: React.FC = () => {
                 <ReportForm />
               </div>
               <div className="neo-card">
-                <h2 className="text-xl font-bold mb-4 text-shadow">Recently Reported Issues</h2>
+                <h2 className="text-xl font-bold mb-4 text-shadow">Newly Reported</h2>
                 <div className="space-y-3">
-                  {[
-                    { location: "Connaught Place, Delhi", severity: "high", date: "2025-04-09", size: "large" },
-                    { location: "MG Road, Bangalore", severity: "medium", date: "2025-04-08", size: "medium" },
-                    { location: "Marine Drive, Mumbai", severity: "low", date: "2025-04-07", size: "small" },
-                    { location: "Anna Salai, Chennai", severity: "high", date: "2025-04-06", size: "medium" },
-                    { location: "Park Street, Kolkata", severity: "medium", date: "2025-04-05", size: "large" }
-                  ].map((report, index) => (
-                    <div key={index} className={`p-3 rounded-md border ${
-                      report.severity === 'high' ? 'border-red-500/30 bg-red-950/40' :
-                      report.severity === 'medium' ? 'border-yellow-500/30 bg-yellow-950/40' :
-                      'border-green-500/30 bg-green-950/40'
-                    }`}>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-sm text-shadow">{report.location}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          report.severity === 'high' ? 'bg-red-500 text-white' :
-                          report.severity === 'medium' ? 'bg-yellow-500 text-black' :
-                          'bg-green-500 text-white'
-                        }`}>{report.severity}</span>
-                      </div>
-                      <div className="text-xs mt-1 text-muted-foreground flex justify-between">
-                        <span>Reported: {report.date}</span>
-                        <span>Size: {report.size}</span>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Reports will appear here when submitted</p>
+                  </div>
                 </div>
               </div>
             </div>
