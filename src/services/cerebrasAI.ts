@@ -5,7 +5,7 @@
 import { toast } from "sonner";
 
 // API key should ideally come from environment variables
-const API_KEY = "csk-mny4dv5rc3y6626j5vd2nphc3v6ceddt3vvynnyhce9dctmf";
+const API_KEY = "csk-5dfccvdv9eccpv8jftx2fne5w22vfxhcwr9cndtck924f9cy";
 
 /**
  * Interface for chat message structure
@@ -30,7 +30,7 @@ export async function detectPotholesInFrame(
         Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-4-scout-17b-16e-instruct",
+        model: "llama-3.3-70b",
         messages: [
           {
             role: "system",
@@ -71,7 +71,7 @@ export async function executePythonCommand(command: string): Promise<string[]> {
         Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-4-scout-17b-16e-instruct",
+        model: "llama-3.3-70b",
         messages: [
           {
             role: "system",
@@ -115,7 +115,7 @@ export async function getPotholeAIResponse(messages: ChatMessage[]): Promise<str
         Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-4-scout-17b-16e-instruct",
+        model: "llama-3.3-70b",
         messages: [
           {
             role: "system",
@@ -160,7 +160,7 @@ export async function streamPotholeAIResponse(
         Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-4-scout-17b-16e-instruct",
+        model: "llama-3.3-70b",
         messages: [
           {
             role: "system",
