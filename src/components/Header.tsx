@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Menu, Bell, User, MapPin, BarChart4, ChevronDown, Settings } from 'lucide-react';
+import { AlertTriangle, Menu, Bell, User, MapPin, BarChart4, ChevronDown, Settings, LogOut } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -28,8 +30,15 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [notificationCount, setNotificationCount] = useState(3);
   const [selectedCity, setSelectedCity] = useState("Delhi NCR");
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth');
+  };
   
   const indianCities = [
     "Delhi NCR",
@@ -200,12 +209,22 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-md border-border">
+            <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-md border-border w-56">
+              <div className="px-2 py-2 border-b border-border">
+                <p className="text-sm font-medium text-foreground">{user?.name}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              </div>
               <DropdownMenuItem className="text-foreground">Profile</DropdownMenuItem>
               <DropdownMenuItem className="text-foreground">My Reports</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-foreground">Settings</DropdownMenuItem>
-              <DropdownMenuItem className="text-foreground">Log out</DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Log out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
